@@ -47,7 +47,8 @@ public class MeetingAnalysisAgent : IAgent
             "SummarizeMeeting",
             "AnalyzeSentiment",
             "ProcessTranscriptFile",
-            "AnalyzeSampleMeeting"
+            "AnalyzeSampleMeeting",
+            "CreateJiraTicketsFromMeeting"
         };
     }
 
@@ -263,6 +264,70 @@ public class MeetingAnalysisAgent : IAgent
         {
             Console.WriteLine($"❌ Error analyzing sample meeting: {ex.Message}");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Creates Jira tickets from meeting action items with SK orchestration
+    /// </summary>
+    /// <param name="meetingResult">Meeting analysis results</param>
+    /// <param name="jiraIntegrationAgent">Jira integration agent</param>
+    /// <returns>Summary of ticket creation results</returns>
+    [KernelFunction("create_jira_tickets_from_meeting")]
+    [Description("Creates Jira tickets from meeting action items using AI orchestration")]
+    public async Task<string> CreateJiraTicketsFromMeeting(
+        [Description("Meeting analysis results containing action items")] MeetingAnalysisResult meetingResult,
+        [Description("Jira integration agent for ticket operations")] JiraIntegrationAgent jiraIntegrationAgent)
+    {
+        try
+        {
+            Console.WriteLine($"🎫 Creating Jira tickets from meeting: {meetingResult.MeetingTitle}");
+
+            // Use Jira integration agent to create tickets
+            var results = await jiraIntegrationAgent.CreateTicketsFromMeeting(meetingResult);
+
+            // Generate summary using Semantic Kernel
+            var prompt = $@"
+Summarize the Jira ticket creation results from this meeting analysis:
+
+**Meeting**: {meetingResult.MeetingTitle}
+**Date**: {meetingResult.MeetingDate:yyyy-MM-dd}
+**Total Action Items**: {meetingResult.ActionItems.Count}
+**Tickets Created**: {results.Count(r => r.Success)}
+**Failed Creations**: {results.Count(r => !r.Success)}
+
+**Successful Tickets**:
+{string.Join("\n", results.Where(r => r.Success).Select(r => $"- {r.TicketKey}: {r.Message}"))}
+
+{(results.Any(r => !r.Success) ? $@"
+**Failed Tickets**:
+{string.Join("\n", results.Where(r => !r.Success).Select(r => $"- {r.Message}"))}" : "")}
+
+Provide a concise summary of the ticket creation process and any follow-up actions needed.
+Include the success rate and highlight any important tickets that were created.";
+
+            var response = await _kernel.InvokePromptAsync(prompt);
+            
+            var summary = $@"🎫 **Jira Ticket Creation Summary**
+
+{response}
+
+**Statistics**:
+- ✅ **Successful**: {results.Count(r => r.Success)}/{results.Count}
+- ❌ **Failed**: {results.Count(r => !r.Success)}/{results.Count}
+- 🕒 **Process Time**: {DateTime.Now:HH:mm:ss}
+
+**Created Tickets**:
+{string.Join("\n", results.Where(r => r.Success).Select(r => $"• [{r.TicketKey}]({r.TicketUrl}) - {r.TicketKey}"))}
+
+---
+*Tickets created via Semantic Kernel orchestration*";
+
+            return summary;
+        }
+        catch (Exception ex)
+        {
+            return $"❌ Error creating Jira tickets from meeting: {ex.Message}";
         }
     }
 

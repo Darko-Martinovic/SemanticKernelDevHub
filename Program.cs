@@ -74,9 +74,49 @@ try
     kernel.ImportPluginFromObject(fileSystemPlugin, "FileSystem");
     Console.WriteLine("✅ FileSystemPlugin initialized and registered successfully");
 
-    // Initialize and register CodeReviewAgent with GitHub plugin
+    // Initialize Jira Plugin
+    Console.WriteLine("\n🎫 Initializing Jira integration...");
+    JiraPlugin? jiraPlugin = null;
+    JiraIntegrationAgent? jiraIntegrationAgent = null;
+    var jiraUrl = Environment.GetEnvironmentVariable("JIRA_URL");
+    var jiraEmail = Environment.GetEnvironmentVariable("JIRA_EMAIL");
+    var jiraToken = Environment.GetEnvironmentVariable("JIRA_API_TOKEN");
+    var jiraProjectKey = Environment.GetEnvironmentVariable("JIRA_PROJECT_KEY");
+
+    if (!string.IsNullOrEmpty(jiraUrl) && !string.IsNullOrEmpty(jiraEmail) && 
+        !string.IsNullOrEmpty(jiraToken) && !string.IsNullOrEmpty(jiraProjectKey))
+    {
+        try
+        {
+            jiraPlugin = new JiraPlugin(jiraUrl, jiraEmail, jiraToken, jiraProjectKey);
+            kernel.ImportPluginFromObject(jiraPlugin, "Jira");
+            
+            // Test Jira connection
+            var connectionTest = await jiraPlugin.TestConnection();
+            Console.WriteLine($"🔌 {connectionTest}");
+            
+            // Initialize JiraIntegrationAgent
+            jiraIntegrationAgent = new JiraIntegrationAgent(kernel, jiraPlugin, jiraProjectKey);
+            await jiraIntegrationAgent.InitializeAsync();
+            await jiraIntegrationAgent.RegisterFunctionsAsync(kernel);
+            
+            Console.WriteLine("✅ JiraPlugin and JiraIntegrationAgent initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️  Jira integration initialization failed: {ex.Message}");
+            Console.WriteLine("📝 Jira features will be disabled");
+        }
+    }
+    else
+    {
+        Console.WriteLine("⚠️  Jira configuration incomplete - Jira features will be disabled");
+        Console.WriteLine("📝 Please ensure JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_PROJECT_KEY are set");
+    }
+
+    // Initialize and register CodeReviewAgent with GitHub plugin and Jira integration
     Console.WriteLine("\n🤖 Initializing agents...");
-    var codeReviewAgent = new CodeReviewAgent(kernel, gitHubPlugin);
+    var codeReviewAgent = new CodeReviewAgent(kernel, gitHubPlugin, jiraIntegrationAgent);
     await codeReviewAgent.InitializeAsync();
     await codeReviewAgent.RegisterFunctionsAsync(kernel);
 
@@ -89,13 +129,34 @@ try
     var functions = kernel.Plugins.GetFunctionsMetadata();
     Console.WriteLine($"📋 Available functions: [{string.Join(", ", functions.Select(f => f.Name))}]");
     
-    if (gitHubPlugin != null)
+    // Final status messages
+    if (gitHubPlugin != null && jiraPlugin != null)
     {
-        Console.WriteLine("\n🎉 Semantic Kernel with Meeting Analysis Ready!");
+        Console.WriteLine("\n🎉 Semantic Kernel with Full Integration Ready!");
+        Console.WriteLine("✅ GitHubPlugin registered successfully");
+        Console.WriteLine("✅ FileSystemPlugin registered successfully");
+        Console.WriteLine("✅ JiraPlugin registered successfully");
+        Console.WriteLine("✅ CodeReviewAgent with GitHub capabilities ready");
+        Console.WriteLine("✅ MeetingAnalysisAgent ready for transcript processing");
+        Console.WriteLine("✅ JiraIntegrationAgent ready for ticket operations");
+    }
+    else if (gitHubPlugin != null)
+    {
+        Console.WriteLine("\n🎉 Semantic Kernel with GitHub + Meeting Analysis Ready!");
         Console.WriteLine("✅ GitHubPlugin registered successfully");
         Console.WriteLine("✅ FileSystemPlugin registered successfully");
         Console.WriteLine("✅ CodeReviewAgent with GitHub capabilities ready");
         Console.WriteLine("✅ MeetingAnalysisAgent ready for transcript processing");
+        Console.WriteLine("⚠️  Jira integration not available");
+    }
+    else if (jiraPlugin != null)
+    {
+        Console.WriteLine("\n🎉 Semantic Kernel with Jira + Meeting Analysis Ready!");
+        Console.WriteLine("✅ FileSystemPlugin registered successfully");
+        Console.WriteLine("✅ JiraPlugin registered successfully");
+        Console.WriteLine("✅ MeetingAnalysisAgent ready for transcript processing");
+        Console.WriteLine("✅ JiraIntegrationAgent ready for ticket operations");
+        Console.WriteLine("⚠️  GitHub integration not available");
     }
     else
     {
@@ -105,7 +166,7 @@ try
     }
 
     // Interactive menu
-    await RunInteractiveMenu(kernel, codeReviewAgent, gitHubPlugin, meetingAnalysisAgent, fileSystemPlugin);
+    await RunInteractiveMenu(kernel, codeReviewAgent, gitHubPlugin, meetingAnalysisAgent, fileSystemPlugin, jiraIntegrationAgent);
 }
 catch (Exception ex)
 {
@@ -113,7 +174,7 @@ catch (Exception ex)
     Console.WriteLine($"📋 Details: {ex}");
 }
 
-static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent, GitHubPlugin? gitHubPlugin, MeetingAnalysisAgent meetingAnalysisAgent, FileSystemPlugin fileSystemPlugin)
+static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent, GitHubPlugin? gitHubPlugin, MeetingAnalysisAgent meetingAnalysisAgent, FileSystemPlugin fileSystemPlugin, JiraIntegrationAgent? jiraIntegrationAgent)
 {
     while (true)
     {
@@ -122,7 +183,24 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
         Console.WriteLine(new string('=', 60));
         Console.WriteLine("Choose an option:");
         
-        if (gitHubPlugin != null)
+        if (gitHubPlugin != null && jiraIntegrationAgent != null)
+        {
+            Console.WriteLine("1. Review Latest Commit");
+            Console.WriteLine("2. List Recent Commits");
+            Console.WriteLine("3. Review Specific Commit");
+            Console.WriteLine("4. Review Pull Request");
+            Console.WriteLine("5. Analyze Custom Code");
+            Console.WriteLine("6. Check Coding Standards");
+            Console.WriteLine("7. Repository Information");
+            Console.WriteLine("8. Process Meeting Transcript");
+            Console.WriteLine("9. Start File Watcher Mode");
+            Console.WriteLine("10. Analyze Sample Meeting");
+            Console.WriteLine("11. Test Jira Connection");
+            Console.WriteLine("12. Create Sample Jira Ticket");
+            Console.WriteLine("13. Update Existing Jira Ticket");
+            Console.WriteLine("14. Exit");
+        }
+        else if (gitHubPlugin != null)
         {
             Console.WriteLine("1. Review Latest Commit");
             Console.WriteLine("2. List Recent Commits");
@@ -136,6 +214,19 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("10. Analyze Sample Meeting");
             Console.WriteLine("11. Exit");
         }
+        else if (jiraIntegrationAgent != null)
+        {
+            Console.WriteLine("1. Test Code Review Agent");
+            Console.WriteLine("2. Analyze Sample Code");
+            Console.WriteLine("3. Check Coding Standards");
+            Console.WriteLine("4. Process Meeting Transcript");
+            Console.WriteLine("5. Start File Watcher Mode");
+            Console.WriteLine("6. Analyze Sample Meeting");
+            Console.WriteLine("7. Test Jira Connection");
+            Console.WriteLine("8. Create Sample Jira Ticket");
+            Console.WriteLine("9. Update Existing Jira Ticket");
+            Console.WriteLine("10. Exit");
+        }
         else
         {
             Console.WriteLine("1. Test Code Review Agent");
@@ -148,12 +239,16 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("8. Exit");
         }
         
-        Console.Write($"\nEnter your choice (1-{(gitHubPlugin != null ? "11" : "8")}): ");
+        var maxChoice = (gitHubPlugin != null && jiraIntegrationAgent != null) ? "14" :
+                       (gitHubPlugin != null) ? "11" :
+                       (jiraIntegrationAgent != null) ? "10" : "8";
+        
+        Console.Write($"\nEnter your choice (1-{maxChoice}): ");
         var choice = Console.ReadLine();
 
         try
         {
-            if (gitHubPlugin != null)
+            if (gitHubPlugin != null && jiraIntegrationAgent != null)
             {
                 switch (choice)
                 {
@@ -188,10 +283,19 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
                         await AnalyzeSampleMeeting(meetingAnalysisAgent);
                         break;
                     case "11":
+                        await TestJiraConnection(jiraIntegrationAgent!);
+                        break;
+                    case "12":
+                        await CreateSampleJiraTicket(jiraIntegrationAgent!);
+                        break;
+                    case "13":
+                        await UpdateExistingJiraTicket(jiraIntegrationAgent!);
+                        break;
+                    case "14":
                         Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
                         return;
                     default:
-                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-11.");
+                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-14.");
                         break;
                 }
             }
@@ -221,6 +325,15 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
                         await AnalyzeSampleMeeting(meetingAnalysisAgent);
                         break;
                     case "8":
+                        await TestJiraConnection(jiraIntegrationAgent!);
+                        break;
+                    case "9":
+                        await CreateSampleJiraTicket(jiraIntegrationAgent!);
+                        break;
+                    case "10":
+                        await UpdateExistingJiraTicket(jiraIntegrationAgent!);
+                        break;
+                    case "11":
                         Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
                         return;
                     default:
@@ -547,6 +660,30 @@ static async Task AnalyzeSampleMeeting(MeetingAnalysisAgent meetingAgent)
         Console.WriteLine($"❌ Error: {ex.Message}");
     }
     
+    Console.WriteLine("\nPress any key to continue...");
+    Console.ReadKey();
+}
+
+static async Task TestJiraConnection(JiraIntegrationAgent jiraAgent)
+{
+    Console.WriteLine("\n🔌 Testing Jira connection...");
+    Console.WriteLine("✅ Jira connection test would run here");
+    Console.WriteLine("\nPress any key to continue...");
+    Console.ReadKey();
+}
+
+static async Task CreateSampleJiraTicket(JiraIntegrationAgent jiraAgent)
+{
+    Console.WriteLine("\n🎫 Creating sample Jira ticket...");
+    Console.WriteLine("✅ Sample ticket creation would run here");
+    Console.WriteLine("\nPress any key to continue...");
+    Console.ReadKey();
+}
+
+static async Task UpdateExistingJiraTicket(JiraIntegrationAgent jiraAgent)
+{
+    Console.WriteLine("\n🎫 Updating Jira ticket...");
+    Console.WriteLine("✅ Ticket update would run here");
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }

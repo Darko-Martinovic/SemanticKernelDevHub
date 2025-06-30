@@ -16,15 +16,17 @@ public class CodeReviewAgent : IAgent
     private readonly string? _repoOwner;
     private readonly string? _repoName;
     private readonly GitHubPlugin? _gitHubPlugin;
+    private readonly JiraIntegrationAgent? _jiraAgent;
 
     public string Name => "CodeReviewAgent";
     
     public string Description => "Analyzes code quality, suggests improvements, and performs automated code reviews for C#, VB.NET, T-SQL, JavaScript, React, and Java";
 
-    public CodeReviewAgent(Kernel kernel, GitHubPlugin? gitHubPlugin = null)
+    public CodeReviewAgent(Kernel kernel, GitHubPlugin? gitHubPlugin = null, JiraIntegrationAgent? jiraAgent = null)
     {
         _kernel = kernel;
         _gitHubPlugin = gitHubPlugin;
+        _jiraAgent = jiraAgent;
         
         // Initialize GitHub client if token is available
         var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
@@ -40,19 +42,17 @@ public class CodeReviewAgent : IAgent
         }
     }
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        // Perform any initialization logic here
-        await Task.CompletedTask;
         Console.WriteLine($"✅ {Name} initialized successfully");
+        return Task.CompletedTask;
     }
 
-    public async Task RegisterFunctionsAsync(Kernel kernel)
+    public Task RegisterFunctionsAsync(Kernel kernel)
     {
-        // Register this class's methods as kernel functions
         kernel.ImportPluginFromObject(this, "CodeReview");
-        await Task.CompletedTask;
         Console.WriteLine($"🔧 {Name} functions registered with kernel");
+        return Task.CompletedTask;
     }
 
     public IEnumerable<string> GetFunctionNames()
