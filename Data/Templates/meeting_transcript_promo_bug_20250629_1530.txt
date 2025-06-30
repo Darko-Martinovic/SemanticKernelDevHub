@@ -1,0 +1,54 @@
+Meeting Transcript: Promotional Bug Analysis
+Date: June 29, 2025, 3:30 PM
+Duration: 30 minutes
+Participants: Sarah, Mike, Alex, Jennifer
+
+Sarah: Hi everyone, thanks for joining on short notice. We have an urgent promotional bug that's affecting our weekend sale campaign.
+
+Mike: What's the situation, Sarah? I saw some reports coming in but haven't had a chance to investigate yet.
+
+Sarah: The promotional discount codes aren't applying correctly for customers. Instead of the advertised 25% off, some customers are getting 50% off, and others are getting no discount at all.
+
+Alex: That's a serious issue. Do we know how many customers have been affected?
+
+Sarah: From the initial reports, it looks like about 200 orders in the last 6 hours. The financial impact could be significant if we don't fix this quickly.
+
+Jennifer: I can look into the promotional code logic. Mike, can you check the database for any recent changes to the discount tables?
+
+Mike: Absolutely. I'll run a comparison against yesterday's data to see what might have changed.
+
+Sarah: Good. Alex, can you handle customer communications? We need to proactively reach out to affected customers.
+
+Alex: Of course. Should I offer compensation for the customers who didn't receive their discount?
+
+Sarah: Yes, let's make it right for our customers. Offer them the correct 25% discount plus a small goodwill credit.
+
+Jennifer: I found something. There's a conflict in the promotional code rules. Two campaigns are overlapping and causing the calculation errors.
+
+Mike: That explains the inconsistent behavior. Jennifer, can you disable the conflicting campaign temporarily while we fix the logic?
+
+Jennifer: I can do that right now. Give me two minutes to implement the hotfix.
+
+Sarah: Perfect. Once that's done, Alex, please send out apology emails to the affected customers with their corrected orders.
+
+Alex: Will do. Should I also post an update on our social media channels to address any public complaints?
+
+Sarah: Good thinking. Keep it brief and professional - acknowledge the issue and confirm it's been resolved.
+
+Jennifer: Hotfix is deployed. The promotional codes should now be working correctly. I'm monitoring the system to confirm.
+
+Mike: I see the database changes. Everything looks correct now. New orders should process with the right discount.
+
+Sarah: Excellent work everyone. Alex, please keep tracking customer feedback over the next few hours to make sure we haven't missed anything.
+
+Alex: Absolutely. I'll also coordinate with customer service to brief them on the situation in case customers call in.
+
+Sarah: Perfect. Let's reconvene tomorrow morning to review the full impact and discuss how we can prevent similar issues in the future.
+
+Jennifer: I'll prepare a technical postmortem document for tomorrow's review.
+
+Mike: And I'll compile the data on affected orders and financial impact.
+
+Sarah: Great. Thanks everyone for the quick response. This could have been much worse without your fast action.
+
+[Meeting ended at 4:00 PM]

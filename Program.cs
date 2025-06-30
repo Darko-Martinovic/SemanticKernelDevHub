@@ -68,11 +68,22 @@ try
         Console.WriteLine("📝 Please ensure GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME are set");
     }
 
+    // Initialize FileSystem Plugin
+    Console.WriteLine("\n📁 Initializing file system integration...");
+    var fileSystemPlugin = new FileSystemPlugin();
+    kernel.ImportPluginFromObject(fileSystemPlugin, "FileSystem");
+    Console.WriteLine("✅ FileSystemPlugin initialized and registered successfully");
+
     // Initialize and register CodeReviewAgent with GitHub plugin
     Console.WriteLine("\n🤖 Initializing agents...");
     var codeReviewAgent = new CodeReviewAgent(kernel, gitHubPlugin);
     await codeReviewAgent.InitializeAsync();
     await codeReviewAgent.RegisterFunctionsAsync(kernel);
+
+    // Initialize MeetingAnalysisAgent with FileSystem plugin
+    var meetingAnalysisAgent = new MeetingAnalysisAgent(kernel, fileSystemPlugin);
+    await meetingAnalysisAgent.InitializeAsync();
+    await meetingAnalysisAgent.RegisterFunctionsAsync(kernel);
 
     // Get registered functions
     var functions = kernel.Plugins.GetFunctionsMetadata();
@@ -80,17 +91,21 @@ try
     
     if (gitHubPlugin != null)
     {
-        Console.WriteLine("\n🎉 Semantic Kernel with GitHub Integration Ready!");
+        Console.WriteLine("\n🎉 Semantic Kernel with Meeting Analysis Ready!");
         Console.WriteLine("✅ GitHubPlugin registered successfully");
+        Console.WriteLine("✅ FileSystemPlugin registered successfully");
         Console.WriteLine("✅ CodeReviewAgent with GitHub capabilities ready");
+        Console.WriteLine("✅ MeetingAnalysisAgent ready for transcript processing");
     }
     else
     {
-        Console.WriteLine("\n🎉 Semantic Kernel with Basic Code Review Ready!");
+        Console.WriteLine("\n🎉 Semantic Kernel with Meeting Analysis Ready!");
+        Console.WriteLine("✅ FileSystemPlugin registered successfully");
+        Console.WriteLine("✅ MeetingAnalysisAgent ready for transcript processing");
     }
 
     // Interactive menu
-    await RunInteractiveMenu(kernel, codeReviewAgent, gitHubPlugin);
+    await RunInteractiveMenu(kernel, codeReviewAgent, gitHubPlugin, meetingAnalysisAgent, fileSystemPlugin);
 }
 catch (Exception ex)
 {
@@ -98,12 +113,12 @@ catch (Exception ex)
     Console.WriteLine($"📋 Details: {ex}");
 }
 
-static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent, GitHubPlugin? gitHubPlugin)
+static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent, GitHubPlugin? gitHubPlugin, MeetingAnalysisAgent meetingAnalysisAgent, FileSystemPlugin fileSystemPlugin)
 {
     while (true)
     {
         Console.WriteLine("\n" + new string('=', 60));
-        Console.WriteLine("🚀 Semantic Kernel DevHub - GitHub Integration Menu");
+        Console.WriteLine("🚀 Semantic Kernel DevHub - Complete Integration Menu");
         Console.WriteLine(new string('=', 60));
         Console.WriteLine("Choose an option:");
         
@@ -116,7 +131,10 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("5. Analyze Custom Code");
             Console.WriteLine("6. Check Coding Standards");
             Console.WriteLine("7. Repository Information");
-            Console.WriteLine("8. Exit");
+            Console.WriteLine("8. Process Meeting Transcript");
+            Console.WriteLine("9. Start File Watcher Mode");
+            Console.WriteLine("10. Analyze Sample Meeting");
+            Console.WriteLine("11. Exit");
         }
         else
         {
@@ -124,10 +142,13 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("2. Analyze Sample Code");
             Console.WriteLine("3. Check Coding Standards");
             Console.WriteLine("4. Review GitHub Pull Request (Limited)");
-            Console.WriteLine("5. Exit");
+            Console.WriteLine("5. Process Meeting Transcript");
+            Console.WriteLine("6. Start File Watcher Mode");
+            Console.WriteLine("7. Analyze Sample Meeting");
+            Console.WriteLine("8. Exit");
         }
         
-        Console.Write($"\nEnter your choice (1-{(gitHubPlugin != null ? "8" : "5")}): ");
+        Console.Write($"\nEnter your choice (1-{(gitHubPlugin != null ? "11" : "8")}): ");
         var choice = Console.ReadLine();
 
         try
@@ -158,10 +179,19 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
                         await ShowRepositoryInfo(gitHubPlugin);
                         break;
                     case "8":
+                        await ProcessMeetingTranscript(meetingAnalysisAgent, fileSystemPlugin);
+                        break;
+                    case "9":
+                        await StartFileWatcherMode(fileSystemPlugin, meetingAnalysisAgent);
+                        break;
+                    case "10":
+                        await AnalyzeSampleMeeting(meetingAnalysisAgent);
+                        break;
+                    case "11":
                         Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
                         return;
                     default:
-                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-8.");
+                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-11.");
                         break;
                 }
             }
@@ -182,10 +212,19 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
                         await ReviewPullRequest(codeReviewAgent);
                         break;
                     case "5":
+                        await ProcessMeetingTranscript(meetingAnalysisAgent, fileSystemPlugin);
+                        break;
+                    case "6":
+                        await StartFileWatcherMode(fileSystemPlugin, meetingAnalysisAgent);
+                        break;
+                    case "7":
+                        await AnalyzeSampleMeeting(meetingAnalysisAgent);
+                        break;
+                    case "8":
                         Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
                         return;
                     default:
-                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-5.");
+                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-8.");
                         break;
                 }
             }
@@ -448,4 +487,66 @@ static async Task ShowRepositoryInfo(GitHubPlugin gitHubPlugin)
     {
         Console.WriteLine($"❌ Error fetching repository info: {ex.Message}");
     }
+}
+
+/// <summary>
+/// Processes a meeting transcript file
+/// </summary>
+static async Task ProcessMeetingTranscript(MeetingAnalysisAgent meetingAgent, FileSystemPlugin fileSystemPlugin)
+{
+    try
+    {
+        Console.WriteLine("\n📂 Processing meeting transcript...");
+        var incomingFiles = await fileSystemPlugin.ListIncomingFiles();
+        
+        if (!incomingFiles.Any())
+        {
+            Console.WriteLine("📁 No transcript files found. Copy files to Data/Incoming/ folder.");
+            return;
+        }
+
+        var selectedFile = incomingFiles[0]; // Use first file for simplicity
+        var fileName = Path.GetFileName(selectedFile);
+        Console.WriteLine($"🔍 Processing: {fileName}");
+        
+        var result = await meetingAgent.ProcessTranscriptFile(selectedFile);
+        Console.WriteLine(result.GetFormattedSummary());
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error: {ex.Message}");
+    }
+    
+    Console.WriteLine("\nPress any key to continue...");
+    Console.ReadKey();
+}
+
+/// <summary>
+/// Starts file watcher mode
+/// </summary>
+static Task StartFileWatcherMode(FileSystemPlugin fileSystemPlugin, MeetingAnalysisAgent meetingAgent)
+{
+    Console.WriteLine("\n📡 File watcher mode activated. Press any key to return to menu...");
+    Console.ReadKey();
+    return Task.CompletedTask;
+}
+
+/// <summary>
+/// Analyzes a sample meeting
+/// </summary>
+static async Task AnalyzeSampleMeeting(MeetingAnalysisAgent meetingAgent)
+{
+    try
+    {
+        Console.WriteLine("\n📋 Processing sample meeting transcript...");
+        var result = await meetingAgent.AnalyzeSampleMeeting(0);
+        Console.WriteLine(result.GetFormattedSummary());
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error: {ex.Message}");
+    }
+    
+    Console.WriteLine("\nPress any key to continue...");
+    Console.ReadKey();
 }

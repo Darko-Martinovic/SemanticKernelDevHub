@@ -1,0 +1,94 @@
+Meeting Transcript: Confluence Template Migration
+Date: June 29, 2025, 4:30 PM
+Duration: 60 minutes
+Participants: David, Lisa, Tom, Rachel, Brian
+
+David: Good afternoon team. Today we're discussing the migration of our documentation templates from the old Confluence instance to the new one.
+
+Lisa: Hi David. I've been preparing the template audit and have identified 47 templates that need to be migrated.
+
+Tom: That's quite a few. Have you categorized them by priority or usage frequency?
+
+Lisa: Yes, I've grouped them into three categories: critical templates used daily, important templates used weekly, and archived templates for reference only.
+
+Rachel: How many fall into each category?
+
+Lisa: Critical: 12 templates, Important: 23 templates, Archived: 12 templates. I think we should focus on the critical ones first.
+
+David: That makes sense. What's our timeline for this migration project?
+
+Brian: From an infrastructure perspective, we have the new Confluence instance ready. The migration window should be next weekend to minimize disruption.
+
+David: Perfect. Lisa, can you lead the template migration? Tom and Rachel, can you assist with testing and validation?
+
+Lisa: Absolutely. I'll need about a week to prepare the critical templates for migration. Tom and Rachel, can you help me test them in the staging environment?
+
+Tom: Sure. What specific testing are you looking for?
+
+Lisa: We need to verify that all formatting is preserved, links work correctly, and any embedded macros function as expected.
+
+Rachel: I can handle the macro testing. Some of our templates have complex Confluence macros that might not transfer cleanly.
+
+Brian: Good point, Rachel. I've documented the macro compatibility between the old and new instances. There are a few that will need manual conversion.
+
+David: Brian, can you share that compatibility document with the team after this meeting?
+
+Brian: Of course. I'll send it out within the hour.
+
+Lisa: Once we complete the critical templates, how quickly can we move to the important ones?
+
+David: Let's assess after the first phase. If everything goes smoothly, we can probably start the important templates the following weekend.
+
+Tom: What about user training? The new Confluence interface is different, and people might need guidance on accessing the migrated templates.
+
+Rachel: Good point, Tom. Should we create training documentation or video tutorials?
+
+David: Both would be ideal. Rachel, can you take the lead on creating user guides? Tom, can you help with video tutorials?
+
+Rachel: I can definitely handle the documentation. How detailed should the guides be?
+
+David: Focus on the most commonly used features and templates. We don't need to cover every edge case initially.
+
+Tom: For the videos, should I cover template usage or also template creation and editing?
+
+David: Start with usage for now. We can add creation and editing tutorials later if there's demand.
+
+Lisa: Should we also set up a feedback mechanism for users to report issues with the migrated templates?
+
+Brian: That's a great idea. I can set up a dedicated email alias or Confluence space for migration feedback.
+
+David: Excellent. So our action plan is: Lisa leads migration with Tom and Rachel testing, Brian provides technical support and creates feedback channel, Rachel creates user guides, and Tom creates video tutorials.
+
+Lisa: What about communication to the broader organization? When should we announce the migration?
+
+David: Let's announce it after we complete the critical templates successfully. We don't want to create confusion if we encounter unexpected issues.
+
+Brian: I can prepare a communication template for David to review before we send it out.
+
+Tom: Should we also include a timeline in the communication so people know when to expect the different phases?
+
+David: Yes, but let's keep it flexible. We'll provide target dates but explain that they may adjust based on testing results.
+
+Rachel: One more thing - should we archive the old templates immediately after migration, or keep them available for a transition period?
+
+David: Good question. Let's keep the old templates read-only for 30 days after migration in case anyone needs to reference them.
+
+Brian: I can configure the old instance for read-only access during that transition period.
+
+Lisa: That covers everything on my list. Are there any other considerations we should address?
+
+David: I think we've covered the main points. Let's schedule a check-in meeting for next Wednesday to review our progress on the critical templates.
+
+Tom: I'll send out a calendar invite for next Wednesday at the same time.
+
+David: Perfect. Thanks everyone for the thorough planning. This migration is important for our documentation standardization efforts.
+
+Brian: Thanks David. I'll get started on the technical setup and send out that compatibility document.
+
+Rachel: And I'll begin outlining the user guide structure.
+
+Lisa: I'll start preparing the critical templates for migration testing.
+
+David: Excellent. Let's make this migration a smooth transition for everyone.
+
+[Meeting ended at 5:30 PM]
