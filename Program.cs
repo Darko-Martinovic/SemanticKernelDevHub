@@ -2,6 +2,8 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using SemanticKernelDevHub.Agents;
+using SemanticKernelDevHub.Plugins;
+using SemanticKernelDevHub.Models;
 
 // Load environment variables from .env file
 Env.Load();
@@ -39,20 +41,56 @@ try
     Console.WriteLine($"📡 Connected to Azure OpenAI endpoint: {endpoint}");
     Console.WriteLine($"🤖 Using deployment: {deploymentName}");
 
-    // Initialize and register CodeReviewAgent
+    // Initialize GitHub Plugin
+    Console.WriteLine("\n🐙 Initializing GitHub integration...");
+    GitHubPlugin? gitHubPlugin = null;
+    var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+    var gitHubOwner = Environment.GetEnvironmentVariable("GITHUB_REPO_OWNER");
+    var gitHubRepo = Environment.GetEnvironmentVariable("GITHUB_REPO_NAME");
+
+    if (!string.IsNullOrEmpty(gitHubToken) && !string.IsNullOrEmpty(gitHubOwner) && !string.IsNullOrEmpty(gitHubRepo))
+    {
+        try
+        {
+            gitHubPlugin = new GitHubPlugin(gitHubToken, gitHubOwner, gitHubRepo);
+            kernel.ImportPluginFromObject(gitHubPlugin, "GitHub");
+            Console.WriteLine("✅ GitHubPlugin initialized and registered successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️  GitHub plugin initialization failed: {ex.Message}");
+            Console.WriteLine("📝 Code review will work in limited mode without GitHub integration");
+        }
+    }
+    else
+    {
+        Console.WriteLine("⚠️  GitHub configuration incomplete - some features will be limited");
+        Console.WriteLine("📝 Please ensure GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME are set");
+    }
+
+    // Initialize and register CodeReviewAgent with GitHub plugin
     Console.WriteLine("\n🤖 Initializing agents...");
-    var codeReviewAgent = new CodeReviewAgent(kernel);
+    var codeReviewAgent = new CodeReviewAgent(kernel, gitHubPlugin);
     await codeReviewAgent.InitializeAsync();
     await codeReviewAgent.RegisterFunctionsAsync(kernel);
 
     // Get registered functions
     var functions = kernel.Plugins.GetFunctionsMetadata();
-    Console.WriteLine($"� Available functions: [{string.Join(", ", functions.Select(f => f.Name))}]");
+    Console.WriteLine($"📋 Available functions: [{string.Join(", ", functions.Select(f => f.Name))}]");
     
-    Console.WriteLine("\n🎉 Semantic Kernel with Agents Ready!");
+    if (gitHubPlugin != null)
+    {
+        Console.WriteLine("\n🎉 Semantic Kernel with GitHub Integration Ready!");
+        Console.WriteLine("✅ GitHubPlugin registered successfully");
+        Console.WriteLine("✅ CodeReviewAgent with GitHub capabilities ready");
+    }
+    else
+    {
+        Console.WriteLine("\n🎉 Semantic Kernel with Basic Code Review Ready!");
+    }
 
     // Interactive menu
-    await RunInteractiveMenu(kernel, codeReviewAgent);
+    await RunInteractiveMenu(kernel, codeReviewAgent, gitHubPlugin);
 }
 catch (Exception ex)
 {
@@ -60,45 +98,96 @@ catch (Exception ex)
     Console.WriteLine($"📋 Details: {ex}");
 }
 
-static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent)
+static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent, GitHubPlugin? gitHubPlugin)
 {
     while (true)
     {
-        Console.WriteLine("\n" + new string('=', 50));
-        Console.WriteLine("🚀 Semantic Kernel DevHub - Agent Menu");
-        Console.WriteLine(new string('=', 50));
+        Console.WriteLine("\n" + new string('=', 60));
+        Console.WriteLine("🚀 Semantic Kernel DevHub - GitHub Integration Menu");
+        Console.WriteLine(new string('=', 60));
         Console.WriteLine("Choose an option:");
-        Console.WriteLine("1. Test Code Review Agent");
-        Console.WriteLine("2. Analyze Sample Code");
-        Console.WriteLine("3. Check Coding Standards");
-        Console.WriteLine("4. Review GitHub Pull Request");
-        Console.WriteLine("5. Exit");
-        Console.Write("\nEnter your choice (1-5): ");
-
+        
+        if (gitHubPlugin != null)
+        {
+            Console.WriteLine("1. Review Latest Commit");
+            Console.WriteLine("2. List Recent Commits");
+            Console.WriteLine("3. Review Specific Commit");
+            Console.WriteLine("4. Review Pull Request");
+            Console.WriteLine("5. Analyze Custom Code");
+            Console.WriteLine("6. Check Coding Standards");
+            Console.WriteLine("7. Repository Information");
+            Console.WriteLine("8. Exit");
+        }
+        else
+        {
+            Console.WriteLine("1. Test Code Review Agent");
+            Console.WriteLine("2. Analyze Sample Code");
+            Console.WriteLine("3. Check Coding Standards");
+            Console.WriteLine("4. Review GitHub Pull Request (Limited)");
+            Console.WriteLine("5. Exit");
+        }
+        
+        Console.Write($"\nEnter your choice (1-{(gitHubPlugin != null ? "8" : "5")}): ");
         var choice = Console.ReadLine();
 
         try
         {
-            switch (choice)
+            if (gitHubPlugin != null)
             {
-                case "1":
-                    await TestCodeReviewAgent(codeReviewAgent);
-                    break;
-                case "2":
-                    await AnalyzeSampleCode(codeReviewAgent);
-                    break;
-                case "3":
-                    await CheckCodingStandards(codeReviewAgent);
-                    break;
-                case "4":
-                    await ReviewPullRequest(codeReviewAgent);
-                    break;
-                case "5":
-                    Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
-                    return;
-                default:
-                    Console.WriteLine("\n❌ Invalid choice. Please enter 1-5.");
-                    break;
+                switch (choice)
+                {
+                    case "1":
+                        await ReviewLatestCommit(codeReviewAgent);
+                        break;
+                    case "2":
+                        await ListRecentCommits(codeReviewAgent);
+                        break;
+                    case "3":
+                        await ReviewSpecificCommit(codeReviewAgent);
+                        break;
+                    case "4":
+                        await ReviewPullRequest(codeReviewAgent);
+                        break;
+                    case "5":
+                        await AnalyzeSampleCode(codeReviewAgent);
+                        break;
+                    case "6":
+                        await CheckCodingStandards(codeReviewAgent);
+                        break;
+                    case "7":
+                        await ShowRepositoryInfo(gitHubPlugin);
+                        break;
+                    case "8":
+                        Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
+                        return;
+                    default:
+                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-8.");
+                        break;
+                }
+            }
+            else
+            {
+                switch (choice)
+                {
+                    case "1":
+                        await TestCodeReviewAgent(codeReviewAgent);
+                        break;
+                    case "2":
+                        await AnalyzeSampleCode(codeReviewAgent);
+                        break;
+                    case "3":
+                        await CheckCodingStandards(codeReviewAgent);
+                        break;
+                    case "4":
+                        await ReviewPullRequest(codeReviewAgent);
+                        break;
+                    case "5":
+                        Console.WriteLine("\n👋 Thank you for using Semantic Kernel DevHub!");
+                        return;
+                    default:
+                        Console.WriteLine("\n❌ Invalid choice. Please enter 1-5.");
+                        break;
+                }
             }
         }
         catch (Exception ex)
@@ -237,4 +326,126 @@ static async Task ReviewPullRequest(CodeReviewAgent agent)
     var result = await agent.ReviewPullRequest(prNumber);
     Console.WriteLine("\n📊 Pull Request Review:");
     Console.WriteLine(result);
+}
+
+static async Task ReviewLatestCommit(CodeReviewAgent agent)
+{
+    Console.WriteLine("\n🔍 Reviewing latest commit...");
+    try
+    {
+        var result = await agent.ReviewLatestCommit();
+        Console.WriteLine("\n📊 Latest Commit Review Result:");
+        Console.WriteLine(result.ToString());
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error reviewing latest commit: {ex.Message}");
+    }
+}
+
+static async Task ListRecentCommits(CodeReviewAgent agent)
+{
+    Console.WriteLine("\n📝 Fetching recent commits...");
+    Console.Write("How many commits to show (1-20, default 10): ");
+    var countInput = Console.ReadLine();
+    
+    if (!int.TryParse(countInput, out var count) || count < 1 || count > 20)
+    {
+        count = 10;
+    }
+
+    try
+    {
+        var commits = await agent.ListRecentCommits(count);
+        
+        Console.WriteLine($"\n📝 Recent {commits.Count} commits:");
+        Console.WriteLine(new string('-', 60));
+        
+        foreach (var commit in commits)
+        {
+            Console.WriteLine($"  {commit.ShortSha} - {commit.Message.Split('\n')[0]}");
+            Console.WriteLine($"      👤 {commit.Author} | 📅 {commit.Date:yyyy-MM-dd HH:mm}");
+            if (commit.FilesChanged.Any())
+            {
+                Console.WriteLine($"      📁 {commit.FilesChanged.Count} files changed (+{commit.TotalAdditions}/-{commit.TotalDeletions})");
+            }
+            Console.WriteLine();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error fetching commits: {ex.Message}");
+    }
+}
+
+static async Task ReviewSpecificCommit(CodeReviewAgent agent)
+{
+    Console.Write("\nEnter commit SHA to review: ");
+    var commitSha = Console.ReadLine();
+    
+    if (string.IsNullOrWhiteSpace(commitSha))
+    {
+        Console.WriteLine("❌ No commit SHA provided.");
+        return;
+    }
+
+    Console.WriteLine($"\n🔍 Reviewing commit {commitSha}...");
+    
+    try
+    {
+        var result = await agent.ReviewCommit(commitSha);
+        Console.WriteLine("\n📊 Commit Review Result:");
+        Console.WriteLine(result.ToString());
+        
+        if (result.FileReviews.Any())
+        {
+            Console.WriteLine("\n📋 Individual File Reviews:");
+            Console.WriteLine(new string('-', 60));
+            
+            foreach (var fileReview in result.FileReviews)
+            {
+                Console.WriteLine($"📄 {fileReview.FileName} ({fileReview.Language})");
+                Console.WriteLine($"   Score: {fileReview.Score}/10");
+                
+                if (fileReview.Issues.Any())
+                {
+                    Console.WriteLine($"   Issues: {string.Join(", ", fileReview.Issues.Take(2))}");
+                }
+                
+                Console.WriteLine();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error reviewing commit: {ex.Message}");
+    }
+}
+
+static async Task ShowRepositoryInfo(GitHubPlugin gitHubPlugin)
+{
+    Console.WriteLine("\n📊 Fetching repository information...");
+    
+    try
+    {
+        var repoInfo = await gitHubPlugin.GetRepositoryInfo();
+        var repo = System.Text.Json.JsonSerializer.Deserialize<dynamic>(repoInfo);
+        
+        Console.WriteLine("\n📋 Repository Information:");
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine($"Name: {repo?.GetProperty("Name").GetString()}");
+        Console.WriteLine($"Description: {repo?.GetProperty("Description").GetString() ?? "No description"}");
+        Console.WriteLine($"Language: {repo?.GetProperty("Language").GetString() ?? "Mixed"}");
+        Console.WriteLine($"Stars: {repo?.GetProperty("StargazersCount").GetInt32()}");
+        Console.WriteLine($"Forks: {repo?.GetProperty("ForksCount").GetInt32()}");
+        Console.WriteLine($"Open Issues: {repo?.GetProperty("OpenIssuesCount").GetInt32()}");
+        Console.WriteLine($"Default Branch: {repo?.GetProperty("DefaultBranch").GetString()}");
+        Console.WriteLine($"Created: {repo?.GetProperty("CreatedAt").GetDateTime():yyyy-MM-dd}");
+        Console.WriteLine($"Last Updated: {repo?.GetProperty("UpdatedAt").GetDateTime():yyyy-MM-dd}");
+        Console.WriteLine($"URL: {repo?.GetProperty("Url").GetString()}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error fetching repository info: {ex.Message}");
+    }
 }

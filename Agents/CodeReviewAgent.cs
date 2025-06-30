@@ -1,6 +1,8 @@
 using Microsoft.SemanticKernel;
 using System.ComponentModel;
 using Octokit;
+using SemanticKernelDevHub.Models;
+using SemanticKernelDevHub.Plugins;
 
 namespace SemanticKernelDevHub.Agents;
 
@@ -13,14 +15,16 @@ public class CodeReviewAgent : IAgent
     private readonly GitHubClient? _gitHubClient;
     private readonly string? _repoOwner;
     private readonly string? _repoName;
+    private readonly GitHubPlugin? _gitHubPlugin;
 
     public string Name => "CodeReviewAgent";
     
     public string Description => "Analyzes code quality, suggests improvements, and performs automated code reviews for C#, VB.NET, T-SQL, JavaScript, React, and Java";
 
-    public CodeReviewAgent(Kernel kernel)
+    public CodeReviewAgent(Kernel kernel, GitHubPlugin? gitHubPlugin = null)
     {
         _kernel = kernel;
+        _gitHubPlugin = gitHubPlugin;
         
         // Initialize GitHub client if token is available
         var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
@@ -239,6 +243,339 @@ Standard: {standard}";
         }
     }
 
+    /// <summary>
+    /// Reviews a specific commit using GitHub integration
+    /// </summary>
+    /// <param name="commitSha">The commit SHA to review</param>
+    /// <returns>Structured code review result</returns>
+    [KernelFunction("review_commit")]
+    [Description("Reviews a specific GitHub commit with detailed analysis")]
+    public async Task<CodeReviewResult> ReviewCommit(
+        [Description("The SHA of the commit to review")] string commitSha)
+    {
+        if (_gitHubPlugin == null)
+        {
+            throw new InvalidOperationException("GitHub plugin not available for commit review");
+        }
+
+        var startTime = DateTime.Now;
+        var result = new CodeReviewResult
+        {
+            Metadata = new ReviewMetadata
+            {
+                ReviewType = CodeReviewType.Commit,
+                Target = commitSha,
+                ReviewDate = startTime
+            }
+        };
+
+        try
+        {
+            // Get commit details
+            var commitInfo = await _gitHubPlugin.GetCommitDetails(commitSha);
+            
+            // Filter to supported languages only
+            var supportedFiles = commitInfo.FilesChanged
+                .Where(f => f.IsSupportedForReview)
+                .ToList();
+
+            result.Metadata.TotalFilesAnalyzed = supportedFiles.Count;
+
+            // Review each file
+            foreach (var file in supportedFiles.Take(10)) // Limit to 10 files
+            {
+                var fileReview = await ReviewFile(file);
+                result.FileReviews.Add(fileReview);
+            }
+
+            // Calculate overall score and generate summary
+            result.OverallScore = result.FileReviews.Any() 
+                ? (int)result.FileReviews.Average(f => f.Score)
+                : 0;
+
+            result.KeyIssues = result.FileReviews
+                .SelectMany(f => f.Issues)
+                .GroupBy(issue => issue)
+                .Where(g => g.Count() > 1) // Issues that appear in multiple files
+                .Select(g => $"{g.Key} (found in {g.Count()} files)")
+                .ToList();
+
+            result.Recommendations = GenerateRecommendations(result.FileReviews);
+
+            result.Summary = await GenerateCommitSummary(commitInfo, result);
+
+            result.Metadata.ReviewDuration = DateTime.Now - startTime;
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            result.Summary = $"❌ Error reviewing commit {commitSha}: {ex.Message}";
+            result.OverallScore = 0;
+            result.Metadata.ReviewDuration = DateTime.Now - startTime;
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Reviews the latest commit in the repository
+    /// </summary>
+    /// <returns>Code review result for the latest commit</returns>
+    [KernelFunction("review_latest_commit")]
+    [Description("Reviews the most recent commit in the repository")]
+    public async Task<CodeReviewResult> ReviewLatestCommit()
+    {
+        if (_gitHubPlugin == null)
+        {
+            throw new InvalidOperationException("GitHub plugin not available");
+        }
+
+        var commits = await _gitHubPlugin.GetRecentCommits(1);
+        if (!commits.Any())
+        {
+            return new CodeReviewResult
+            {
+                Summary = "No commits found in repository",
+                OverallScore = 0
+            };
+        }
+
+        return await ReviewCommit(commits.First().Sha);
+    }
+
+    /// <summary>
+    /// Lists recent commits from the repository
+    /// </summary>
+    /// <param name="count">Number of commits to retrieve</param>
+    /// <returns>List of recent commits</returns>
+    [KernelFunction("list_recent_commits")]
+    [Description("Lists recent commits from the GitHub repository")]
+    public async Task<List<GitHubCommitInfo>> ListRecentCommits(
+        [Description("Number of commits to retrieve (1-20)")] int count = 10)
+    {
+        if (_gitHubPlugin == null)
+        {
+            throw new InvalidOperationException("GitHub plugin not available");
+        }
+
+        count = Math.Max(1, Math.Min(count, 20)); // Limit between 1-20
+        return await _gitHubPlugin.GetRecentCommits(count);
+    }
+
+    /// <summary>
+    /// Reviews a file change from GitHub
+    /// </summary>
+    private async Task<FileReviewResult> ReviewFile(GitHubFileInfo file)
+    {
+        var fileReview = new FileReviewResult
+        {
+            FileName = file.FileName,
+            Language = file.DetectedLanguage
+        };
+
+        try
+        {
+            if (string.IsNullOrEmpty(file.Patch))
+            {
+                fileReview.Review = "No changes to review";
+                fileReview.Score = 10;
+                return fileReview;
+            }
+
+            var codeToReview = file.GetCodeContent();
+            if (string.IsNullOrWhiteSpace(codeToReview))
+            {
+                fileReview.Review = "No substantial code changes found";
+                fileReview.Score = 10;
+                return fileReview;
+            }
+
+            // Analyze the code using existing methods
+            var analysis = await AnalyzeCode(codeToReview, file.DetectedLanguage);
+            
+            // Parse the analysis to extract score and details
+            fileReview.Review = analysis;
+            fileReview.Score = ExtractScoreFromAnalysis(analysis);
+            fileReview.Issues = ExtractIssuesFromAnalysis(analysis);
+            fileReview.Suggestions = ExtractSuggestionsFromAnalysis(analysis);
+
+            return fileReview;
+        }
+        catch (Exception ex)
+        {
+            fileReview.Review = $"Error analyzing file: {ex.Message}";
+            fileReview.Score = 0;
+            return fileReview;
+        }
+    }
+
+    /// <summary>
+    /// Generates an overall summary for the commit review
+    /// </summary>
+    private async Task<string> GenerateCommitSummary(GitHubCommitInfo commitInfo, CodeReviewResult result)
+    {
+        var prompt = $@"
+Create a comprehensive commit review summary based on the following information:
+
+**Commit Information:**
+- SHA: {commitInfo.Sha}
+- Message: {commitInfo.Message}
+- Author: {commitInfo.Author}
+- Files Changed: {commitInfo.FilesChanged.Count}
+- Total Additions: {commitInfo.TotalAdditions}
+- Total Deletions: {commitInfo.TotalDeletions}
+
+**Review Results:**
+- Overall Score: {result.OverallScore}/10
+- Files Reviewed: {result.FileReviews.Count}
+- Key Issues: {string.Join(", ", result.KeyIssues)}
+
+**File Reviews:**
+{string.Join("\n", result.FileReviews.Select(f => $"- {f.FileName} ({f.Language}): {f.Score}/10"))}
+
+Provide a concise summary that includes:
+1. Overall assessment of the commit quality
+2. Main strengths and concerns
+3. Impact assessment
+4. Key recommendations for improvement
+
+Keep it professional and actionable.";
+
+        var response = await _kernel.InvokePromptAsync(prompt);
+        return response.ToString();
+    }
+
+    /// <summary>
+    /// Generates recommendations based on file reviews
+    /// </summary>
+    private List<string> GenerateRecommendations(List<FileReviewResult> fileReviews)
+    {
+        var recommendations = new List<string>();
+
+        var lowScoreFiles = fileReviews.Where(f => f.Score < 6).ToList();
+        if (lowScoreFiles.Any())
+        {
+            recommendations.Add($"Review and improve {lowScoreFiles.Count} files with low quality scores");
+        }
+
+        var commonIssues = fileReviews
+            .SelectMany(f => f.Issues)
+            .GroupBy(issue => issue.Split(' ').Take(3).Aggregate("", (a, b) => a + " " + b).Trim())
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        foreach (var issue in commonIssues)
+        {
+            recommendations.Add($"Address common issue across multiple files: {issue}");
+        }
+
+        if (fileReviews.Any(f => f.Language == "C#" && f.Issues.Any(i => i.Contains("async"))))
+        {
+            recommendations.Add("Review async/await patterns in C# code");
+        }
+
+        if (fileReviews.Any(f => f.Language == "JavaScript" && f.Issues.Any(i => i.Contains("var"))))
+        {
+            recommendations.Add("Consider using let/const instead of var in JavaScript");
+        }
+
+        return recommendations.Any() ? recommendations : new List<string> { "No specific recommendations - code quality looks good!" };
+    }
+
+    /// <summary>
+    /// Extracts quality score from analysis text
+    /// </summary>
+    private int ExtractScoreFromAnalysis(string analysis)
+    {
+        // Look for patterns like "Quality Assessment: X/10" or "Assessment: X"
+        var patterns = new[]
+        {
+            @"Quality Assessment[:\s]*(\d+)/10",
+            @"Assessment[:\s]*(\d+)/10",
+            @"Quality[:\s]*(\d+)/10",
+            @"Score[:\s]*(\d+)/10",
+            @"Assessment[:\s]*(\d+)"
+        };
+
+        foreach (var pattern in patterns)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(analysis, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var score))
+            {
+                return Math.Max(1, Math.Min(score, 10)); // Ensure between 1-10
+            }
+        }
+
+        return 5; // Default neutral score if not found
+    }
+
+    /// <summary>
+    /// Extracts issues from analysis text
+    /// </summary>
+    private List<string> ExtractIssuesFromAnalysis(string analysis)
+    {
+        var issues = new List<string>();
+        
+        // Look for sections with issues
+        var issuePatterns = new[]
+        {
+            @"Issues Found[:\s]*\n?(.+?)(?=\n\*\*|\n\d+\.|\z)",
+            @"Problems[:\s]*\n?(.+?)(?=\n\*\*|\n\d+\.|\z)",
+            @"Concerns[:\s]*\n?(.+?)(?=\n\*\*|\n\d+\.|\z)"
+        };
+
+        foreach (var pattern in issuePatterns)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(analysis, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+            if (match.Success)
+            {
+                var issueText = match.Groups[1].Value.Trim();
+                var lines = issueText.Split('\n')
+                    .Where(line => !string.IsNullOrWhiteSpace(line) && line.Trim().StartsWith("-"))
+                    .Select(line => line.Trim().TrimStart('-').Trim())
+                    .ToList();
+                issues.AddRange(lines);
+            }
+        }
+
+        return issues.Any() ? issues : new List<string>();
+    }
+
+    /// <summary>
+    /// Extracts suggestions from analysis text
+    /// </summary>
+    private List<string> ExtractSuggestionsFromAnalysis(string analysis)
+    {
+        var suggestions = new List<string>();
+        
+        // Look for sections with suggestions
+        var suggestionPatterns = new[]
+        {
+            @"Suggestions[:\s]*\n?(.+?)(?=\n\*\*|\n\d+\.|\z)",
+            @"Recommendations[:\s]*\n?(.+?)(?=\n\*\*|\n\d+\.|\z)",
+            @"Improvements[:\s]*\n?(.+?)(?=\n\*\*|\n\d+\.|\z)"
+        };
+
+        foreach (var pattern in suggestionPatterns)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(analysis, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+            if (match.Success)
+            {
+                var suggestionText = match.Groups[1].Value.Trim();
+                var lines = suggestionText.Split('\n')
+                    .Where(line => !string.IsNullOrWhiteSpace(line) && line.Trim().StartsWith("-"))
+                    .Select(line => line.Trim().TrimStart('-').Trim())
+                    .ToList();
+                suggestions.AddRange(lines);
+            }
+        }
+
+        return suggestions.Any() ? suggestions : new List<string>();
+    }
+
+    // ...existing helper methods...
+    
     /// <summary>
     /// Gets language-specific guidance for code review
     /// </summary>
