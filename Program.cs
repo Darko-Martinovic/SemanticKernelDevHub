@@ -630,6 +630,22 @@ static async Task ListRecentCommits(CodeReviewAgent agent)
         {
             Console.WriteLine($"  {commit.ShortSha} - {commit.Message.Split('\n')[0]}");
             Console.WriteLine($"      👤 {commit.Author} | 📅 {commit.Date:yyyy-MM-dd HH:mm}");
+
+            // Display repository and branch information
+            var repoInfo = "";
+            if (!string.IsNullOrEmpty(commit.RepositoryName))
+            {
+                repoInfo = $"📦 {commit.RepositoryName}";
+            }
+            if (!string.IsNullOrEmpty(commit.BranchName))
+            {
+                repoInfo += string.IsNullOrEmpty(repoInfo) ? $"🌿 {commit.BranchName}" : $" | 🌿 {commit.BranchName}";
+            }
+            if (!string.IsNullOrEmpty(repoInfo))
+            {
+                Console.WriteLine($"      {repoInfo}");
+            }
+
             if (commit.FilesChanged.Any())
             {
                 Console.WriteLine(

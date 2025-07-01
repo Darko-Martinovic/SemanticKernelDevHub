@@ -58,7 +58,8 @@ public class GitHubPlugin
                     Message = commit.Commit.Message,
                     Author = commit.Commit.Author.Name,
                     Date = commit.Commit.Author.Date,
-                    Url = commit.HtmlUrl
+                    Url = commit.HtmlUrl,
+                    RepositoryName = _repoName
                 };
 
                 // Try to get branch information for each commit
@@ -109,6 +110,7 @@ public class GitHubPlugin
                 Author = commit.Commit.Author.Name,
                 Date = commit.Commit.Author.Date,
                 Url = commit.HtmlUrl,
+                RepositoryName = _repoName,
                 FilesChanged =
                     commit.Files
                         ?.Select(

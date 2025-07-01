@@ -36,6 +36,11 @@ public class GitHubCommitInfo
     public string BranchName { get; set; } = string.Empty;
 
     /// <summary>
+    /// The repository name where this commit exists
+    /// </summary>
+    public string RepositoryName { get; set; } = string.Empty;
+
+    /// <summary>
     /// List of files changed in this commit
     /// </summary>
     public List<GitHubFileInfo> FilesChanged { get; set; } = new();
@@ -66,7 +71,9 @@ public class GitHubCommitInfo
     public override string ToString()
     {
         var firstLine = Message.Split('\n')[0];
-        var branchInfo = !string.IsNullOrEmpty(BranchName) ? $" [{BranchName}]" : "";
-        return $"{ShortSha} - {firstLine} ({Author}){branchInfo}";
+        var repoInfo = !string.IsNullOrEmpty(RepositoryName) ? $"[{RepositoryName}]" : "";
+        var branchInfo = !string.IsNullOrEmpty(BranchName) ? $"[{BranchName}]" : "";
+        var contextInfo = string.IsNullOrEmpty(repoInfo) && string.IsNullOrEmpty(branchInfo) ? "" : $" {repoInfo}{branchInfo}";
+        return $"{ShortSha} - {firstLine} ({Author}){contextInfo}";
     }
 }
