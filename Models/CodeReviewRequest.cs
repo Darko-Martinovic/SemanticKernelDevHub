@@ -130,7 +130,7 @@ public class CodeReviewResult
     public ReviewMetadata Metadata { get; set; } = new();
 
     /// <summary>
-    /// Formats the result as a readable string
+    /// Formats the result as a readable string with comprehensive details and clear explanations
     /// </summary>
     public override string ToString()
     {
@@ -141,28 +141,103 @@ public class CodeReviewResult
         {
             result += $"**📂 Repository**: {Metadata.RepositoryName}\n";
         }
+
+        // Make the target more descriptive based on review type
         if (!string.IsNullOrEmpty(Metadata.Target))
         {
-            result += $"**🎯 Target**: {Metadata.Target}\n";
+            var targetDescription = Metadata.ReviewType switch
+            {
+                CodeReviewType.Commit => $"**🎯 Commit**: {Metadata.Target[..Math.Min(8, Metadata.Target.Length)]}... ({Metadata.Target})",
+                CodeReviewType.PullRequest => $"**🎯 Pull Request**: #{Metadata.Target}",
+                CodeReviewType.Latest => $"**🎯 Latest Commit**: {Metadata.Target[..Math.Min(8, Metadata.Target.Length)]}... ({Metadata.Target})",
+                CodeReviewType.Files => $"**🎯 Target Files**: {Metadata.Target}",
+                _ => $"**🎯 Target**: {Metadata.Target}"
+            };
+            result += $"{targetDescription}\n";
         }
 
-        result += $"**Overall Score**: {OverallScore}/10\n";
-        result += $"**Files Reviewed**: {FileReviews.Count}\n";
-        result += $"**Review Date**: {Metadata.ReviewDate:yyyy-MM-dd HH:mm}\n\n";
+        result += $"**🏆 Overall Score**: {OverallScore}/10\n";
+        result += $"**📁 Files Reviewed**: {FileReviews.Count}\n";
+        result += $"**📅 Review Date**: {Metadata.ReviewDate:yyyy-MM-dd HH:mm}\n";
 
+        if (Metadata.ReviewDuration.TotalSeconds > 0)
+        {
+            result += $"**⏱️ Review Duration**: {Metadata.ReviewDuration.TotalSeconds:F1} seconds\n";
+        }
+
+        result += "\n";
+
+        // Add detailed file breakdown
+        if (FileReviews.Any())
+        {
+            result += "**📄 Files Analyzed**:\n";
+            foreach (var file in FileReviews.OrderByDescending(f => f.Score))
+            {
+                var scoreEmoji = file.Score switch
+                {
+                    >= 9 => "🟢",
+                    >= 7 => "🟡",
+                    >= 5 => "🟠",
+                    _ => "🔴"
+                };
+
+                var issueCount = file.Issues.Count > 0 ? $", {file.Issues.Count} issues" : "";
+                var suggestionCount = file.Suggestions.Count > 0 ? $", {file.Suggestions.Count} suggestions" : "";
+
+                result += $"  {scoreEmoji} **{file.FileName}** ({file.Language}): {file.Score}/10{issueCount}{suggestionCount}\n";
+            }
+            result += "\n";
+        }
+
+        // Add skipped files if any
+        if (SkippedFiles.Any())
+        {
+            result += "**⏭️ Skipped Files**:\n";
+            result += string.Join("\n", SkippedFiles.Select(file => $"  - {file}")) + "\n\n";
+        }
+
+        // Add key issues with better formatting
         if (KeyIssues.Any())
         {
-            result += "**🚨 Key Issues**:\n";
-            result += string.Join("\n", KeyIssues.Select(issue => $"- {issue}")) + "\n\n";
+            result += "**🚨 Critical Issues Found**:\n";
+            result += string.Join("\n", KeyIssues.Select(issue => $"  ⚠️ {issue}")) + "\n\n";
         }
 
+        // Add recommendations with better formatting
         if (Recommendations.Any())
         {
             result += "**💡 Recommendations**:\n";
-            result += string.Join("\n", Recommendations.Select(rec => $"- {rec}")) + "\n\n";
+            result += string.Join("\n", Recommendations.Select(rec => $"  ✅ {rec}")) + "\n\n";
         }
 
-        result += Summary;
+        // Add performance summary
+        if (FileReviews.Any())
+        {
+            var averageScore = FileReviews.Average(f => f.Score);
+            var totalIssues = FileReviews.Sum(f => f.Issues.Count);
+            var totalSuggestions = FileReviews.Sum(f => f.Suggestions.Count);
+
+            result += "**📊 Summary Statistics**:\n";
+            result += $"  • Average File Score: {averageScore:F1}/10\n";
+            result += $"  • Total Issues Identified: {totalIssues}\n";
+            result += $"  • Total Suggestions Provided: {totalSuggestions}\n";
+
+            if (FileReviews.Count > 0)
+            {
+                var highQualityFiles = FileReviews.Count(f => f.Score >= 8);
+                var lowQualityFiles = FileReviews.Count(f => f.Score < 6);
+                result += $"  • High Quality Files (8-10): {highQualityFiles}\n";
+                result += $"  • Files Needing Attention (<6): {lowQualityFiles}\n";
+            }
+            result += "\n";
+        }
+
+        // Add the detailed summary
+        if (!string.IsNullOrEmpty(Summary))
+        {
+            result += "**📋 Detailed Analysis**:\n";
+            result += Summary;
+        }
 
         return result;
     }
@@ -202,6 +277,22 @@ public class FileReviewResult
     /// Suggestions for this file
     /// </summary>
     public List<string> Suggestions { get; set; } = new();
+
+    /// <summary>
+    /// Gets a summary of this file review
+    /// </summary>
+    public string GetSummary()
+    {
+        var scoreEmoji = Score switch
+        {
+            >= 9 => "🟢 Excellent",
+            >= 7 => "🟡 Good",
+            >= 5 => "🟠 Fair",
+            _ => "🔴 Needs Improvement"
+        };
+
+        return $"{scoreEmoji} | {FileName} ({Language}) | Score: {Score}/10 | Issues: {Issues.Count} | Suggestions: {Suggestions.Count}";
+    }
 }
 
 /// <summary>
