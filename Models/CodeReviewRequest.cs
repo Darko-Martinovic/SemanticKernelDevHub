@@ -142,6 +142,12 @@ public class CodeReviewResult
             result += $"**📂 Repository**: {Metadata.RepositoryName}\n";
         }
 
+        // Add branch information if available
+        if (!string.IsNullOrEmpty(Metadata.BranchName))
+        {
+            result += $"**🌿 Branch**: {Metadata.BranchName}\n";
+        }
+
         // Make the target more descriptive based on review type
         if (!string.IsNullOrEmpty(Metadata.Target))
         {
@@ -319,6 +325,11 @@ public class ReviewMetadata
     /// The repository name being reviewed
     /// </summary>
     public string RepositoryName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The branch name where the commit/PR exists
+    /// </summary>
+    public string BranchName { get; set; } = string.Empty;
 
     /// <summary>
     /// Total number of files analyzed

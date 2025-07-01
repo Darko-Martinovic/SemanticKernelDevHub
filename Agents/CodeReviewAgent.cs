@@ -461,6 +461,19 @@ Code to review:
             // Get commit details
             var commitInfo = await _gitHubPlugin.GetCommitDetails(commitSha);
 
+            // Get branch information for the commit
+            try
+            {
+                var branchName = await _gitHubPlugin.GetCommitBranch(commitSha);
+                result.Metadata.BranchName = branchName;
+                commitInfo.BranchName = branchName;
+            }
+            catch
+            {
+                // If branch detection fails, continue without it
+                result.Metadata.BranchName = "unknown";
+            }
+
             // Filter to supported languages only
             var supportedFiles = commitInfo.FilesChanged
                 .Where(f => f.IsSupportedForReview)
@@ -634,7 +647,7 @@ You are a senior engineering manager and code review expert creating a comprehen
 ### **Code Review Results:**
 - **Overall Quality Score**: {result.OverallScore}/10
 - **Files Successfully Reviewed**: {result.FileReviews.Count}
-- **Average File Score**: {(result.FileReviews.Any() ? result.FileReviews .Average(f => f.Score) .ToString("F1") : "N/A")}
+- **Average File Score**: {(result.FileReviews.Any() ? result.FileReviews.Average(f => f.Score).ToString("F1") : "N/A")}
 - **Critical Issues Identified**: {result.KeyIssues.Count}
 
 ### **Individual File Analysis:**

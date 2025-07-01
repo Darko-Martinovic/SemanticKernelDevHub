@@ -48,18 +48,34 @@ public class GitHubPlugin
                 request
             );
 
-            return [.. commits
-                .Select(
-                    commit =>
-                        new GitHubCommitInfo
-                        {
-                            Sha = commit.Sha,
-                            Message = commit.Commit.Message,
-                            Author = commit.Commit.Author.Name,
-                            Date = commit.Commit.Author.Date,
-                            Url = commit.HtmlUrl
-                        }
-                )];
+            var commitInfos = new List<GitHubCommitInfo>();
+
+            foreach (var commit in commits)
+            {
+                var commitInfo = new GitHubCommitInfo
+                {
+                    Sha = commit.Sha,
+                    Message = commit.Commit.Message,
+                    Author = commit.Commit.Author.Name,
+                    Date = commit.Commit.Author.Date,
+                    Url = commit.HtmlUrl
+                };
+
+                // Try to get branch information for each commit
+                try
+                {
+                    commitInfo.BranchName = await GetCommitBranch(commit.Sha);
+                }
+                catch
+                {
+                    // If branch detection fails, leave it empty
+                    commitInfo.BranchName = string.Empty;
+                }
+
+                commitInfos.Add(commitInfo);
+            }
+
+            return commitInfos;
         }
         catch (Exception ex)
         {
@@ -110,6 +126,17 @@ public class GitHubPlugin
                         .ToList() ?? new List<GitHubFileInfo>()
             };
 
+            // Try to get branch information
+            try
+            {
+                commitInfo.BranchName = await GetCommitBranch(commitSha);
+            }
+            catch
+            {
+                // If branch detection fails, leave it empty
+                commitInfo.BranchName = string.Empty;
+            }
+
             return commitInfo;
         }
         catch (Exception ex)
@@ -118,6 +145,56 @@ public class GitHubPlugin
                 $"Failed to get commit details for {commitSha}: {ex.Message}",
                 ex
             );
+        }
+    }
+
+    /// <summary>
+    /// Gets the branch(es) that contain a specific commit
+    /// </summary>
+    /// <param name="commitSha">The SHA of the commit</param>
+    /// <returns>Branch name (or default branch if not found)</returns>
+    [KernelFunction("get_commit_branch")]
+    [Description("Gets the branch that contains a specific commit")]
+    public async Task<string> GetCommitBranch(
+        [Description("The SHA (hash) of the commit")] string commitSha
+    )
+    {
+        try
+        {
+            // Try to find branches that contain this commit
+            var branches = await _gitHubClient.Repository.Branch.GetAll(_repoOwner, _repoName);
+
+            foreach (var branch in branches)
+            {
+                try
+                {
+                    // Check if this commit exists in this branch's history
+                    var branchCommits = await _gitHubClient.Repository.Commit.GetAll(
+                        _repoOwner,
+                        _repoName,
+                        new CommitRequest { Sha = branch.Name }
+                    );
+
+                    if (branchCommits.Any(c => c.Sha.StartsWith(commitSha)))
+                    {
+                        return branch.Name;
+                    }
+                }
+                catch
+                {
+                    // Continue checking other branches if one fails
+                    continue;
+                }
+            }
+
+            // If not found in any specific branch, try to get the default branch
+            var repo = await _gitHubClient.Repository.Get(_repoOwner, _repoName);
+            return repo.DefaultBranch;
+        }
+        catch (Exception)
+        {
+            // If all else fails, return "main" as a reasonable default
+            return "main";
         }
     }
 
