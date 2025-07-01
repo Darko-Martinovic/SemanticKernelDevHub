@@ -135,7 +135,7 @@ public class CodeReviewResult
     public override string ToString()
     {
         var result = $"📊 **Code Review Results**\n\n";
-        
+
         // Add repository information if available
         if (!string.IsNullOrEmpty(Metadata.RepositoryName))
         {
@@ -145,7 +145,7 @@ public class CodeReviewResult
         {
             result += $"**🎯 Target**: {Metadata.Target}\n";
         }
-        
+
         result += $"**Overall Score**: {OverallScore}/10\n";
         result += $"**Files Reviewed**: {FileReviews.Count}\n";
         result += $"**Review Date**: {Metadata.ReviewDate:yyyy-MM-dd HH:mm}\n\n";

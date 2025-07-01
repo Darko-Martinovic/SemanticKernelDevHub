@@ -19,7 +19,7 @@ public class CodeReviewAgent : IAgent
     private readonly JiraIntegrationAgent? _jiraAgent;
 
     public string Name => "CodeReviewAgent";
-    
+
     public string Description => "Analyzes code quality, suggests improvements, and performs automated code reviews for C#, VB.NET, T-SQL, JavaScript, React, and Java";
 
     public CodeReviewAgent(Kernel kernel, GitHubPlugin? gitHubPlugin = null, JiraIntegrationAgent? jiraAgent = null)
@@ -27,7 +27,7 @@ public class CodeReviewAgent : IAgent
         _kernel = kernel;
         _gitHubPlugin = gitHubPlugin;
         _jiraAgent = jiraAgent;
-        
+
         // Initialize GitHub client if token is available
         var gitHubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
         if (!string.IsNullOrEmpty(gitHubToken))
@@ -36,7 +36,7 @@ public class CodeReviewAgent : IAgent
             {
                 Credentials = new Credentials(gitHubToken)
             };
-            
+
             _repoOwner = Environment.GetEnvironmentVariable("GITHUB_REPO_OWNER");
             _repoName = Environment.GetEnvironmentVariable("GITHUB_REPO_NAME");
         }
@@ -86,7 +86,7 @@ public class CodeReviewAgent : IAgent
         }
 
         var languageSpecificGuidance = GetLanguageSpecificGuidance(language);
-        
+
         var prompt = $@"
 You are an expert code reviewer specializing in {language}. Analyze the following {language} code and provide:
 
@@ -274,7 +274,7 @@ Standard: {standard}";
         {
             // Get commit details
             var commitInfo = await _gitHubPlugin.GetCommitDetails(commitSha);
-            
+
             // Filter to supported languages only
             var supportedFiles = commitInfo.FilesChanged
                 .Where(f => f.IsSupportedForReview)
@@ -290,7 +290,7 @@ Standard: {standard}";
             }
 
             // Calculate overall score and generate summary
-            result.OverallScore = result.FileReviews.Any() 
+            result.OverallScore = result.FileReviews.Any()
                 ? (int)result.FileReviews.Average(f => f.Score)
                 : 0;
 
@@ -399,7 +399,7 @@ Standard: {standard}";
 
             // Analyze the code using existing methods
             var analysis = await AnalyzeCode(codeToReview, file.DetectedLanguage);
-            
+
             // Parse the analysis to extract score and details
             fileReview.Review = analysis;
             fileReview.Score = ExtractScoreFromAnalysis(analysis);
@@ -523,7 +523,7 @@ Keep it professional and actionable.";
     private List<string> ExtractIssuesFromAnalysis(string analysis)
     {
         var issues = new List<string>();
-        
+
         // Look for sections with issues
         var issuePatterns = new[]
         {
@@ -555,7 +555,7 @@ Keep it professional and actionable.";
     private List<string> ExtractSuggestionsFromAnalysis(string analysis)
     {
         var suggestions = new List<string>();
-        
+
         // Look for sections with suggestions
         var suggestionPatterns = new[]
         {
@@ -582,7 +582,7 @@ Keep it professional and actionable.";
     }
 
     // ...existing helper methods...
-    
+
     /// <summary>
     /// Gets language-specific guidance for code review
     /// </summary>
