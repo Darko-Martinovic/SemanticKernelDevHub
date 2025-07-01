@@ -47,13 +47,13 @@ public class OrchestrationService
         {
             // For now, execute a simplified workflow using direct agent calls
             // In a full implementation, this would use SK Planning capabilities
-            
+
             result.GeneratedPlan = $"Executing workflow: {workflowDescription}";
             result.Steps = new List<WorkflowStep>();
 
             // Analyze the workflow description and execute appropriate agents
             var workflowResult = await ExecuteSimplifiedWorkflow(workflowDescription);
-            
+
             result.Result = workflowResult;
             result.Success = true;
             result.EndTime = DateTime.UtcNow;
@@ -84,7 +84,7 @@ public class OrchestrationService
         {
             return "Meeting analysis workflow would be executed here";
         }
-        
+
         return "General workflow executed successfully";
     }
 
@@ -116,7 +116,7 @@ public class OrchestrationService
                 var securityKeywords = new[] { "security", "vulnerability", "authentication", "authorization", "injection", "xss" };
                 result.SecurityIssuesFound = codeReview.FileReviews
                     .SelectMany(f => f.Issues)
-                    .Where(issue => securityKeywords.Any(keyword => 
+                    .Where(issue => securityKeywords.Any(keyword =>
                         issue.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
 
@@ -127,10 +127,10 @@ public class OrchestrationService
             if (_meetingAnalysisAgent != null && result.SecurityIssuesFound.Any())
             {
                 Console.WriteLine("💬 Step 2: Checking recent meetings for security discussions...");
-                
+
                 // This would search meeting transcripts for security-related discussions
                 result.RelatedMeetingDiscussions = await SearchMeetingsForSecurityTopics();
-                
+
                 Console.WriteLine($"📋 Found {result.RelatedMeetingDiscussions.Count} related meeting discussions");
             }
 
@@ -138,7 +138,7 @@ public class OrchestrationService
             if (_jiraIntegrationAgent != null && result.SecurityIssuesFound.Any())
             {
                 Console.WriteLine("🎫 Step 3: Creating comprehensive security Jira ticket...");
-                
+
                 var ticketRequest = new TicketCreationRequest
                 {
                     Title = $"Security Review Required - Commit {commitSha[..8]}",
@@ -149,8 +149,8 @@ public class OrchestrationService
                 };
 
                 result.JiraTicketCreated = await _jiraIntegrationAgent.CreateTicketFromActionItem(
-                    new ActionItem 
-                    { 
+                    new ActionItem
+                    {
                         Description = ticketRequest.Description,
                         Priority = ActionItemPriority.High,
                         AssignedTo = "Security Team"
@@ -228,7 +228,7 @@ public class OrchestrationService
                                        issue.Contains("optimization", StringComparison.OrdinalIgnoreCase) ||
                                        issue.Contains("slow", StringComparison.OrdinalIgnoreCase))
                         .ToList();
-                    
+
                     result.PerformanceCodeIssues.AddRange(perfIssues);
                 }
 
@@ -240,7 +240,7 @@ public class OrchestrationService
             {
                 Console.WriteLine("🔮 Step 4: Generating performance predictions and recommendations...");
                 result.PredictiveRecommendations = await _intelligenceAgent.GeneratePredictiveInsights();
-                
+
                 result.PerformanceRecommendations = result.PredictiveRecommendations
                     .Where(r => r.Category == RecommendationCategory.Performance)
                     .ToList();
@@ -299,7 +299,7 @@ public class OrchestrationService
             {
                 Console.WriteLine("🔍 Step 2: Analyzing code quality trends and technical debt...");
                 var recentCommits = await _codeReviewAgent.ListRecentCommits(10);
-                
+
                 result.QualityTrends = new List<string>();
                 var totalScore = 0.0;
                 var reviewCount = 0;
@@ -327,7 +327,7 @@ public class OrchestrationService
             {
                 Console.WriteLine("⚠️ Step 4: Identifying potential risks and opportunities...");
                 var predictions = await _intelligenceAgent.GeneratePredictiveInsights(14);
-                
+
                 result.SprintRisks = predictions
                     .Where(p => p.Priority == RecommendationPriority.High || p.Priority == RecommendationPriority.Critical)
                     .Select(p => p.Description)

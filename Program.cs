@@ -84,23 +84,23 @@ try
     var jiraToken = Environment.GetEnvironmentVariable("JIRA_API_TOKEN");
     var jiraProjectKey = Environment.GetEnvironmentVariable("JIRA_PROJECT_KEY");
 
-    if (!string.IsNullOrEmpty(jiraUrl) && !string.IsNullOrEmpty(jiraEmail) && 
+    if (!string.IsNullOrEmpty(jiraUrl) && !string.IsNullOrEmpty(jiraEmail) &&
         !string.IsNullOrEmpty(jiraToken) && !string.IsNullOrEmpty(jiraProjectKey))
     {
         try
         {
             jiraPlugin = new JiraPlugin(jiraUrl, jiraEmail, jiraToken, jiraProjectKey);
             kernel.ImportPluginFromObject(jiraPlugin, "Jira");
-            
+
             // Test Jira connection
             var connectionTest = await jiraPlugin.TestConnection();
             Console.WriteLine($"🔌 {connectionTest}");
-            
+
             // Initialize JiraIntegrationAgent
             jiraIntegrationAgent = new JiraIntegrationAgent(kernel, jiraPlugin, jiraProjectKey);
             await jiraIntegrationAgent.InitializeAsync();
             await jiraIntegrationAgent.RegisterFunctionsAsync(kernel);
-            
+
             Console.WriteLine("✅ JiraPlugin and JiraIntegrationAgent initialized successfully");
         }
         catch (Exception ex)
@@ -140,7 +140,7 @@ try
     // Get registered functions
     var functions = kernel.Plugins.GetFunctionsMetadata();
     Console.WriteLine($"📋 Available functions: [{string.Join(", ", functions.Select(f => f.Name))}]");
-    
+
     // Final status messages
     if (gitHubPlugin != null && jiraPlugin != null)
     {
@@ -199,7 +199,7 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
         Console.WriteLine("🧠 Semantic Kernel Intelligence Hub - Phase 6");
         Console.WriteLine(new string('=', 60));
         Console.WriteLine("Choose an option:");
-        
+
         if (gitHubPlugin != null && jiraIntegrationAgent != null)
         {
             Console.WriteLine("📝 Code Review & Analysis:");
@@ -210,17 +210,17 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("5. Analyze Custom Code");
             Console.WriteLine("6. Check Coding Standards");
             Console.WriteLine("7. Repository Information");
-            
+
             Console.WriteLine("\n💬 Meeting Analysis:");
             Console.WriteLine("8. Process Meeting Transcript");
             Console.WriteLine("9. Start File Watcher Mode");
             Console.WriteLine("10. Analyze Sample Meeting");
-            
+
             Console.WriteLine("\n🎫 Jira Integration:");
             Console.WriteLine("11. Test Jira Connection");
             Console.WriteLine("12. Create Sample Jira Ticket");
             Console.WriteLine("13. Update Existing Jira Ticket");
-            
+
             Console.WriteLine("\n🧠 Intelligence & Orchestration:");
             Console.WriteLine("14. Generate Development Intelligence Report");
             Console.WriteLine("15. Analyze Cross-References (Code ↔ Meetings ↔ Jira)");
@@ -229,7 +229,7 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("18. Execute Security Workflow");
             Console.WriteLine("19. Execute Performance Workflow");
             Console.WriteLine("20. Execute Sprint Planning Workflow");
-            
+
             Console.WriteLine("\n⚡ Quick Actions:");
             Console.WriteLine("21. Exit");
         }
@@ -271,11 +271,11 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("7. Analyze Sample Meeting");
             Console.WriteLine("8. Exit");
         }
-        
+
         var maxChoice = (gitHubPlugin != null && jiraIntegrationAgent != null) ? "14" :
                        (gitHubPlugin != null) ? "11" :
                        (jiraIntegrationAgent != null) ? "10" : "8";
-        
+
         Console.Write($"\nEnter your choice (1-{maxChoice}): ");
         var choice = Console.ReadLine();
 
@@ -409,7 +409,7 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
 static async Task TestCodeReviewAgent(CodeReviewAgent agent)
 {
     Console.WriteLine("\n🧪 Testing Code Review Agent with different languages...");
-    
+
     // Test C# code
     var csharpCode = @"
 public class Calculator
@@ -431,7 +431,7 @@ public class Calculator
     Console.WriteLine(csharpResult);
 
     Console.WriteLine("\n" + new string('-', 50));
-    
+
     // Test JavaScript code
     var jsCode = @"
 function calculateTotal(items) {
@@ -452,7 +452,7 @@ static async Task AnalyzeSampleCode(CodeReviewAgent agent)
 {
     Console.WriteLine("\n📝 Enter your code to analyze:");
     Console.WriteLine("(Enter 'END' on a new line when finished)");
-    
+
     var codeLines = new List<string>();
     string? line;
     while ((line = Console.ReadLine()) != "END")
@@ -460,7 +460,7 @@ static async Task AnalyzeSampleCode(CodeReviewAgent agent)
         if (line != null)
             codeLines.Add(line);
     }
-    
+
     var code = string.Join("\n", codeLines);
     if (string.IsNullOrWhiteSpace(code))
     {
@@ -484,7 +484,7 @@ static async Task CheckCodingStandards(CodeReviewAgent agent)
 {
     Console.WriteLine("\n📋 Enter code to check against coding standards:");
     Console.WriteLine("(Enter 'END' on a new line when finished)");
-    
+
     var codeLines = new List<string>();
     string? line;
     while ((line = Console.ReadLine()) != "END")
@@ -492,7 +492,7 @@ static async Task CheckCodingStandards(CodeReviewAgent agent)
         if (line != null)
             codeLines.Add(line);
     }
-    
+
     var code = string.Join("\n", codeLines);
     if (string.IsNullOrWhiteSpace(code))
     {
@@ -521,7 +521,7 @@ static async Task ReviewPullRequest(CodeReviewAgent agent)
 {
     Console.Write("\nEnter GitHub Pull Request number to review: ");
     var prInput = Console.ReadLine();
-    
+
     if (!int.TryParse(prInput, out var prNumber))
     {
         Console.WriteLine("❌ Invalid pull request number.");
@@ -554,7 +554,7 @@ static async Task ListRecentCommits(CodeReviewAgent agent)
     Console.WriteLine("\n📝 Fetching recent commits...");
     Console.Write("How many commits to show (1-20, default 10): ");
     var countInput = Console.ReadLine();
-    
+
     if (!int.TryParse(countInput, out var count) || count < 1 || count > 20)
     {
         count = 10;
@@ -563,10 +563,10 @@ static async Task ListRecentCommits(CodeReviewAgent agent)
     try
     {
         var commits = await agent.ListRecentCommits(count);
-        
+
         Console.WriteLine($"\n📝 Recent {commits.Count} commits:");
         Console.WriteLine(new string('-', 60));
-        
+
         foreach (var commit in commits)
         {
             Console.WriteLine($"  {commit.ShortSha} - {commit.Message.Split('\n')[0]}");
@@ -588,7 +588,7 @@ static async Task ReviewSpecificCommit(CodeReviewAgent agent)
 {
     Console.Write("\nEnter commit SHA to review: ");
     var commitSha = Console.ReadLine();
-    
+
     if (string.IsNullOrWhiteSpace(commitSha))
     {
         Console.WriteLine("❌ No commit SHA provided.");
@@ -596,28 +596,28 @@ static async Task ReviewSpecificCommit(CodeReviewAgent agent)
     }
 
     Console.WriteLine($"\n🔍 Reviewing commit {commitSha}...");
-    
+
     try
     {
         var result = await agent.ReviewCommit(commitSha);
         Console.WriteLine("\n📊 Commit Review Result:");
         Console.WriteLine(result.ToString());
-        
+
         if (result.FileReviews.Any())
         {
             Console.WriteLine("\n📋 Individual File Reviews:");
             Console.WriteLine(new string('-', 60));
-            
+
             foreach (var fileReview in result.FileReviews)
             {
                 Console.WriteLine($"📄 {fileReview.FileName} ({fileReview.Language})");
                 Console.WriteLine($"   Score: {fileReview.Score}/10");
-                
+
                 if (fileReview.Issues.Any())
                 {
                     Console.WriteLine($"   Issues: {string.Join(", ", fileReview.Issues.Take(2))}");
                 }
-                
+
                 Console.WriteLine();
             }
         }
@@ -631,12 +631,12 @@ static async Task ReviewSpecificCommit(CodeReviewAgent agent)
 static async Task ShowRepositoryInfo(GitHubPlugin gitHubPlugin)
 {
     Console.WriteLine("\n📊 Fetching repository information...");
-    
+
     try
     {
         var repoInfo = await gitHubPlugin.GetRepositoryInfo();
         var repo = System.Text.Json.JsonSerializer.Deserialize<dynamic>(repoInfo);
-        
+
         Console.WriteLine("\n📋 Repository Information:");
         Console.WriteLine(new string('-', 50));
         Console.WriteLine($"Name: {repo?.GetProperty("Name").GetString()}");
@@ -665,7 +665,7 @@ static async Task ProcessMeetingTranscript(MeetingAnalysisAgent meetingAgent, Fi
     {
         Console.WriteLine("\n📂 Processing meeting transcript...");
         var incomingFiles = await fileSystemPlugin.ListIncomingFiles();
-        
+
         if (!incomingFiles.Any())
         {
             Console.WriteLine("📁 No transcript files found. Copy files to Data/Incoming/ folder.");
@@ -675,7 +675,7 @@ static async Task ProcessMeetingTranscript(MeetingAnalysisAgent meetingAgent, Fi
         var selectedFile = incomingFiles[0]; // Use first file for simplicity
         var fileName = Path.GetFileName(selectedFile);
         Console.WriteLine($"🔍 Processing: {fileName}");
-        
+
         var result = await meetingAgent.ProcessTranscriptFile(selectedFile);
         Console.WriteLine(result.GetFormattedSummary());
     }
@@ -683,7 +683,7 @@ static async Task ProcessMeetingTranscript(MeetingAnalysisAgent meetingAgent, Fi
     {
         Console.WriteLine($"❌ Error: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -713,7 +713,7 @@ static async Task AnalyzeSampleMeeting(MeetingAnalysisAgent meetingAgent)
     {
         Console.WriteLine($"❌ Error: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -747,44 +747,44 @@ static async Task UpdateExistingJiraTicket(JiraIntegrationAgent jiraAgent)
 static async Task GenerateDevelopmentIntelligenceReport(IntelligenceAgent intelligenceAgent)
 {
     Console.WriteLine("\n🧠 Generating Development Intelligence Report...");
-    
+
     try
     {
         var report = await intelligenceAgent.GenerateDevelopmentIntelligenceReport(7, true);
-        
+
         Console.WriteLine($"\n📊 **DEVELOPMENT INTELLIGENCE REPORT**");
         Console.WriteLine($"📅 Period: {report.Period.FriendlyDescription}");
         Console.WriteLine($"🏥 Health Score: {report.OverallHealthScore}/100");
-        
+
         Console.WriteLine($"\n📈 **KEY METRICS**:");
         Console.WriteLine($"• Commits: {report.Metrics.TotalCommits}");
         Console.WriteLine($"• Code Reviews: {report.Metrics.TotalCodeReviews}");
         Console.WriteLine($"• Meetings: {report.Metrics.TotalMeetings}");
         Console.WriteLine($"• Jira Tickets: {report.Metrics.TotalJiraTickets}");
         Console.WriteLine($"• Action Item Completion: {report.Metrics.ActionItemCompletionRate:F1}%");
-        
+
         Console.WriteLine($"\n🔍 **KEY INSIGHTS**:");
         foreach (var insight in report.Insights.Take(3))
         {
             Console.WriteLine($"• {insight.Title}: {insight.Description}");
         }
-        
+
         Console.WriteLine($"\n💡 **TOP RECOMMENDATIONS**:");
         foreach (var rec in report.Predictions.Take(3))
         {
             Console.WriteLine($"• {rec.Title} ({rec.Priority})");
         }
-        
+
         Console.WriteLine($"\n📋 **EXECUTIVE SUMMARY**:");
         Console.WriteLine(report.ExecutiveSummary);
-        
+
         Console.WriteLine("\n✅ Report complete!");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Error generating report: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -792,43 +792,43 @@ static async Task GenerateDevelopmentIntelligenceReport(IntelligenceAgent intell
 static async Task AnalyzeCrossReferences(IntelligenceAgent intelligenceAgent)
 {
     Console.WriteLine("\n🔗 Analyzing Cross-References Between Systems...");
-    
+
     try
     {
         var crossRef = await intelligenceAgent.AnalyzeCrossReferences("FullSystemAnalysis");
-        
+
         Console.WriteLine($"\n🔍 **CROSS-REFERENCE ANALYSIS**");
         Console.WriteLine($"📊 Confidence Score: {crossRef.ConfidenceScore:F2}");
         Console.WriteLine($"🔗 Connections Found: {crossRef.Connections.Count}");
         Console.WriteLine($"📝 Entities Analyzed: {crossRef.RelatedEntities.Count}");
-        
+
         Console.WriteLine($"\n💡 **KEY INSIGHTS**:");
         foreach (var insight in crossRef.KeyInsights)
         {
             Console.WriteLine($"• {insight}");
         }
-        
+
         Console.WriteLine($"\n🔍 **CONNECTION PATTERNS**:");
         foreach (var pattern in crossRef.Patterns.Take(3))
         {
             Console.WriteLine($"• {pattern.Name}: {pattern.Description} (Confidence: {pattern.Confidence:F2})");
         }
-        
+
         Console.WriteLine($"\n📋 **SUMMARY**:");
         Console.WriteLine(crossRef.Summary);
-        
+
         // Show specific correlations
         var correlationReport = await intelligenceAgent.AnalyzeCodeMeetingCorrelations();
         Console.WriteLine($"\n🔗 **CODE ↔ MEETING CORRELATIONS**:");
         Console.WriteLine(correlationReport);
-        
+
         Console.WriteLine("\n✅ Cross-reference analysis complete!");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Error analyzing cross-references: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -836,18 +836,18 @@ static async Task AnalyzeCrossReferences(IntelligenceAgent intelligenceAgent)
 static async Task ShowPredictiveInsightsDashboard(IntelligenceAgent intelligenceAgent)
 {
     Console.WriteLine("\n🔮 Generating Predictive Insights Dashboard...");
-    
+
     try
     {
         var predictions = await intelligenceAgent.GeneratePredictiveInsights(14);
-        
+
         Console.WriteLine($"\n🔮 **PREDICTIVE INSIGHTS DASHBOARD**");
         Console.WriteLine($"🎯 Prediction Horizon: 14 days");
         Console.WriteLine($"📊 Total Predictions: {predictions.Count}");
-        
+
         // Group by category
         var groupedPredictions = predictions.GroupBy(p => p.Category);
-        
+
         foreach (var group in groupedPredictions)
         {
             Console.WriteLine($"\n📂 **{group.Key.ToString().ToUpper()}**:");
@@ -858,7 +858,7 @@ static async Task ShowPredictiveInsightsDashboard(IntelligenceAgent intelligence
                 Console.WriteLine($"  Expected Impact: {prediction.ExpectedImpact}");
                 Console.WriteLine($"  Time Frame: {prediction.TimeFrame}");
                 Console.WriteLine($"  Description: {prediction.Description}");
-                
+
                 if (prediction.ActionSteps.Any())
                 {
                     Console.WriteLine($"  Action Steps: {prediction.ActionSteps.Count} steps defined");
@@ -866,7 +866,7 @@ static async Task ShowPredictiveInsightsDashboard(IntelligenceAgent intelligence
                 Console.WriteLine();
             }
         }
-        
+
         // Highlight critical predictions
         var criticalPredictions = predictions.Where(p => p.Priority == RecommendationPriority.Critical).ToList();
         if (criticalPredictions.Any())
@@ -877,14 +877,14 @@ static async Task ShowPredictiveInsightsDashboard(IntelligenceAgent intelligence
                 Console.WriteLine($"🚨 {critical.Title}: {critical.Description}");
             }
         }
-        
+
         Console.WriteLine("\n✅ Predictive insights dashboard complete!");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Error generating predictive insights: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -892,29 +892,29 @@ static async Task ShowPredictiveInsightsDashboard(IntelligenceAgent intelligence
 static async Task ExportExecutiveSummary(IntelligenceAgent intelligenceAgent)
 {
     Console.WriteLine("\n📋 Generating Executive Summary...");
-    
+
     try
     {
         var executiveSummary = await intelligenceAgent.CreateExecutiveSummary("Overall");
-        
+
         Console.WriteLine($"\n📋 **EXECUTIVE SUMMARY**");
         Console.WriteLine(new string('=', 50));
         Console.WriteLine(executiveSummary);
         Console.WriteLine(new string('=', 50));
-        
+
         // Also generate focused summaries
         Console.WriteLine($"\n🔒 **SECURITY FOCUS**:");
         var securitySummary = await intelligenceAgent.CreateExecutiveSummary("Security");
         Console.WriteLine(securitySummary);
-        
+
         Console.WriteLine($"\n⚡ **PERFORMANCE FOCUS**:");
         var perfSummary = await intelligenceAgent.CreateExecutiveSummary("Performance");
         Console.WriteLine(perfSummary);
-        
+
         Console.WriteLine($"\n⚠️  **RISK FOCUS**:");
         var riskSummary = await intelligenceAgent.CreateExecutiveSummary("Risks");
         Console.WriteLine(riskSummary);
-        
+
         Console.WriteLine("\n✅ Executive summary exported!");
         Console.WriteLine("💼 Ready for leadership presentation");
     }
@@ -922,7 +922,7 @@ static async Task ExportExecutiveSummary(IntelligenceAgent intelligenceAgent)
     {
         Console.WriteLine($"❌ Error generating executive summary: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -932,30 +932,30 @@ static async Task ExportExecutiveSummary(IntelligenceAgent intelligenceAgent)
 static async Task ExecuteSecurityWorkflow(OrchestrationService orchestrationService)
 {
     Console.WriteLine("\n🔒 Executing Security Workflow...");
-    
+
     Console.Write("Enter commit SHA to analyze (or press Enter for demo): ");
     var commitSha = Console.ReadLine();
-    
+
     if (string.IsNullOrWhiteSpace(commitSha))
     {
         commitSha = "abc123def456"; // Demo SHA
         Console.WriteLine($"Using demo commit SHA: {commitSha}");
     }
-    
+
     try
     {
         var result = await orchestrationService.ExecuteSecurityWorkflow(commitSha);
-        
+
         Console.WriteLine($"\n🔒 **SECURITY WORKFLOW RESULTS**");
         Console.WriteLine($"📅 Duration: {result.EndTime - result.StartTime:mm\\:ss}");
         Console.WriteLine($"✅ Success: {result.Success}");
-        
+
         if (result.Success)
         {
             Console.WriteLine($"\n🔍 **SECURITY ANALYSIS**:");
             Console.WriteLine($"• Commit: {result.CommitSha}");
             Console.WriteLine($"• Security Issues Found: {result.SecurityIssuesFound.Count}");
-            
+
             if (result.SecurityIssuesFound.Any())
             {
                 Console.WriteLine($"\n⚠️  **ISSUES IDENTIFIED**:");
@@ -964,7 +964,7 @@ static async Task ExecuteSecurityWorkflow(OrchestrationService orchestrationServ
                     Console.WriteLine($"• {issue}");
                 }
             }
-            
+
             if (result.RelatedMeetingDiscussions.Any())
             {
                 Console.WriteLine($"\n💬 **RELATED MEETING DISCUSSIONS**:");
@@ -973,14 +973,14 @@ static async Task ExecuteSecurityWorkflow(OrchestrationService orchestrationServ
                     Console.WriteLine($"• {discussion}");
                 }
             }
-            
+
             if (result.JiraTicketCreated != null)
             {
                 Console.WriteLine($"\n🎫 **JIRA TICKET CREATED**:");
                 Console.WriteLine($"• Ticket: {result.JiraTicketCreated.TicketKey}");
                 Console.WriteLine($"• Status: {result.JiraTicketCreated.Success}");
             }
-            
+
             if (!string.IsNullOrEmpty(result.ExecutiveSummary))
             {
                 Console.WriteLine($"\n📋 **EXECUTIVE SUMMARY**:");
@@ -991,14 +991,14 @@ static async Task ExecuteSecurityWorkflow(OrchestrationService orchestrationServ
         {
             Console.WriteLine($"❌ Workflow failed: {result.ErrorMessage}");
         }
-        
+
         Console.WriteLine("\n✅ Security workflow complete!");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Error executing security workflow: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -1006,27 +1006,27 @@ static async Task ExecuteSecurityWorkflow(OrchestrationService orchestrationServ
 static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationService)
 {
     Console.WriteLine("\n⚡ Executing Performance Analysis Workflow...");
-    
+
     Console.Write("Enter number of days to analyze (default 7): ");
     var daysInput = Console.ReadLine();
     var days = string.IsNullOrWhiteSpace(daysInput) ? 7 : int.TryParse(daysInput, out var d) ? d : 7;
-    
+
     try
     {
         var result = await orchestrationService.ExecutePerformanceWorkflow(days);
-        
+
         Console.WriteLine($"\n⚡ **PERFORMANCE WORKFLOW RESULTS**");
         Console.WriteLine($"📅 Analysis Period: {result.AnalysisPeriodDays} days");
         Console.WriteLine($"⏱️ Duration: {result.EndTime - result.StartTime:mm\\:ss}");
         Console.WriteLine($"✅ Success: {result.Success}");
-        
+
         if (result.Success && result.DevelopmentSummary != null)
         {
             Console.WriteLine($"\n📊 **DEVELOPMENT HEALTH**:");
             Console.WriteLine($"• Overall Score: {result.DevelopmentSummary.OverallHealthScore}/100");
             Console.WriteLine($"• Velocity Score: {result.DevelopmentSummary.Performance.VelocityScore:F1}/10");
             Console.WriteLine($"• Quality Score: {result.DevelopmentSummary.Quality.OverallScore:F1}/10");
-            
+
             if (result.PerformanceMeetingInsights.Any())
             {
                 Console.WriteLine($"\n💬 **MEETING INSIGHTS**:");
@@ -1035,7 +1035,7 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
                     Console.WriteLine($"• {insight}");
                 }
             }
-            
+
             if (result.PerformanceCodeIssues.Any())
             {
                 Console.WriteLine($"\n⚠️  **CODE PERFORMANCE ISSUES**:");
@@ -1044,7 +1044,7 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
                     Console.WriteLine($"• {issue}");
                 }
             }
-            
+
             if (result.PerformanceRecommendations.Any())
             {
                 Console.WriteLine($"\n💡 **PERFORMANCE RECOMMENDATIONS**:");
@@ -1054,7 +1054,7 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
                     Console.WriteLine($"  Priority: {rec.Priority} | Time Frame: {rec.TimeFrame}");
                 }
             }
-            
+
             if (!string.IsNullOrEmpty(result.CorrelationReport))
             {
                 Console.WriteLine($"\n🔗 **CORRELATION ANALYSIS**:");
@@ -1065,14 +1065,14 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
         {
             Console.WriteLine($"❌ Workflow failed: {result.ErrorMessage}");
         }
-        
+
         Console.WriteLine("\n✅ Performance workflow complete!");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Error executing performance workflow: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
@@ -1080,7 +1080,7 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
 static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrationService)
 {
     Console.WriteLine("\n🎯 Executing Sprint Planning Intelligence Workflow...");
-    
+
     Console.WriteLine("Enter sprint goals (one per line, empty line to finish):");
     var sprintGoals = new List<string>();
     string goal;
@@ -1088,7 +1088,7 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
     {
         sprintGoals.Add(goal);
     }
-    
+
     if (!sprintGoals.Any())
     {
         sprintGoals = new List<string>
@@ -1099,15 +1099,15 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
         };
         Console.WriteLine("Using default sprint goals for demo...");
     }
-    
+
     try
     {
         var result = await orchestrationService.ExecuteSprintPlanningWorkflow(sprintGoals);
-        
+
         Console.WriteLine($"\n🎯 **SPRINT PLANNING INTELLIGENCE RESULTS**");
         Console.WriteLine($"⏱️ Duration: {result.EndTime - result.StartTime:mm\\:ss}");
         Console.WriteLine($"✅ Success: {result.Success}");
-        
+
         if (result.Success)
         {
             Console.WriteLine($"\n📊 **CURRENT HEALTH STATUS**:");
@@ -1118,13 +1118,13 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
                 Console.WriteLine($"• Quality Trend: {result.CurrentHealthSummary.Performance.VelocityTrend}");
             }
             Console.WriteLine($"• Average Code Quality: {result.AverageCodeQuality:F1}/10");
-            
+
             Console.WriteLine($"\n🎯 **SPRINT GOALS ASSESSMENT**:");
             for (int i = 0; i < result.SprintGoals.Count; i++)
             {
                 Console.WriteLine($"{i + 1}. {result.SprintGoals[i]} ✅");
             }
-            
+
             if (result.EstimateRecommendations.Any())
             {
                 Console.WriteLine($"\n⏱️ **CAPACITY RECOMMENDATIONS**:");
@@ -1133,7 +1133,7 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
                     Console.WriteLine($"• {estimate}");
                 }
             }
-            
+
             if (result.SprintRisks.Any())
             {
                 Console.WriteLine($"\n⚠️  **IDENTIFIED RISKS**:");
@@ -1142,7 +1142,7 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
                     Console.WriteLine($"• {risk}");
                 }
             }
-            
+
             if (result.SprintOpportunities.Any())
             {
                 Console.WriteLine($"\n🌟 **OPPORTUNITIES**:");
@@ -1151,7 +1151,7 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
                     Console.WriteLine($"• {opportunity}");
                 }
             }
-            
+
             if (!string.IsNullOrEmpty(result.ExecutiveRecommendation))
             {
                 Console.WriteLine($"\n📋 **EXECUTIVE RECOMMENDATION**:");
@@ -1162,14 +1162,14 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
         {
             Console.WriteLine($"❌ Workflow failed: {result.ErrorMessage}");
         }
-        
+
         Console.WriteLine("\n✅ Sprint planning workflow complete!");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Error executing sprint planning workflow: {ex.Message}");
     }
-    
+
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }

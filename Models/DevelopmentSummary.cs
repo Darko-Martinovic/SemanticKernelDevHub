@@ -106,7 +106,7 @@ public class DateTimeRange
 {
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    
+
     public TimeSpan Duration => EndDate - StartDate;
     public string FriendlyDescription => $"{StartDate:MMM dd} - {EndDate:MMM dd, yyyy}";
 }
@@ -129,7 +129,7 @@ public class DevelopmentMetrics
     public double AverageMeetingEngagement { get; set; }
     public int ActionItemsCreated { get; set; }
     public int ActionItemsCompleted { get; set; }
-    public double ActionItemCompletionRate => ActionItemsCreated > 0 ? 
+    public double ActionItemCompletionRate => ActionItemsCreated > 0 ?
         (double)ActionItemsCompleted / ActionItemsCreated * 100 : 0;
 }
 

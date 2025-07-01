@@ -151,7 +151,7 @@ public class IntelligenceAgent : IAgent
     [KernelFunction("analyze_cross_references")]
     [Description("Analyzes connections and correlations between code reviews, meetings, and Jira tickets")]
     public async Task<CrossReferenceResult> AnalyzeCrossReferences(
-        [Description("Type of analysis: CodeToMeeting, MeetingToJira, CodeToJira, or FullSystemAnalysis")] 
+        [Description("Type of analysis: CodeToMeeting, MeetingToJira, CodeToJira, or FullSystemAnalysis")]
         string analysisType = "FullSystemAnalysis")
     {
         var result = new CrossReferenceResult
@@ -273,13 +273,13 @@ public class IntelligenceAgent : IAgent
     [KernelFunction("create_executive_summary")]
     [Description("Creates an executive summary for leadership with key insights and recommendations")]
     public async Task<string> CreateExecutiveSummary(
-        [Description("Focus area: Overall, Quality, Performance, Risks, or Opportunities")] 
+        [Description("Focus area: Overall, Quality, Performance, Risks, or Opportunities")]
         string focusArea = "Overall")
     {
         try
         {
             var developmentSummary = await GenerateDevelopmentIntelligenceReport(7, false);
-            
+
             var prompt = $@"
 Create a concise executive summary for senior leadership based on the following development intelligence data.
 
@@ -325,7 +325,7 @@ Focus specifically on: {focusArea}";
     [KernelFunction("detect_patterns")]
     [Description("Detects patterns and trends across development activities")]
     public async Task<List<CrossReferencePattern>> DetectPatterns(
-        [Description("Pattern type: Quality, Performance, Collaboration, or All")] 
+        [Description("Pattern type: Quality, Performance, Collaboration, or All")]
         string patternType = "All")
     {
         try
@@ -365,19 +365,19 @@ Focus specifically on: {focusArea}";
         try
         {
             var crossRef = await AnalyzeCrossReferences("CodeToMeeting");
-            
+
             var correlations = crossRef.Connections
                 .Where(c => c.ConnectionType == ConnectionType.TopicSimilarity && c.Strength > 0.6)
                 .OrderByDescending(c => c.Strength)
                 .Take(5);
 
             var summary = "🔍 **Code Review ↔ Meeting Correlations**\n\n";
-            
+
             foreach (var correlation in correlations)
             {
                 var sourceEntity = crossRef.RelatedEntities.FirstOrDefault(e => e.Id == correlation.SourceEntityId);
                 var targetEntity = crossRef.RelatedEntities.FirstOrDefault(e => e.Id == correlation.TargetEntityId);
-                
+
                 if (sourceEntity != null && targetEntity != null)
                 {
                     summary += $"**High Correlation** ({correlation.Strength:F2} confidence)\n";
@@ -405,7 +405,7 @@ Focus specifically on: {focusArea}";
     private async Task<List<object>> CollectCodeReviewData(DateTime startDate, DateTime endDate)
     {
         var data = new List<object>();
-        
+
         if (_codeReviewAgent != null)
         {
             try
@@ -418,14 +418,14 @@ Focus specifically on: {focusArea}";
                 Console.WriteLine($"Warning: Could not collect code review data: {ex.Message}");
             }
         }
-        
+
         return data;
     }
 
     private async Task<List<object>> CollectMeetingData(DateTime startDate, DateTime endDate)
     {
         var data = new List<object>();
-        
+
         if (_meetingAnalysisAgent != null)
         {
             try
@@ -438,14 +438,14 @@ Focus specifically on: {focusArea}";
                 Console.WriteLine($"Warning: Could not collect meeting data: {ex.Message}");
             }
         }
-        
+
         return data;
     }
 
     private async Task<List<object>> CollectJiraData(DateTime startDate, DateTime endDate)
     {
         var data = new List<object>();
-        
+
         if (_jiraIntegrationAgent != null)
         {
             try
@@ -458,13 +458,13 @@ Focus specifically on: {focusArea}";
                 Console.WriteLine($"Warning: Could not collect Jira data: {ex.Message}");
             }
         }
-        
+
         return data;
     }
 
     private async Task<DevelopmentMetrics> GenerateMetrics(
-        List<object> codeReviews, 
-        List<object> meetings, 
+        List<object> codeReviews,
+        List<object> meetings,
         List<object> jiraTickets)
     {
         return new DevelopmentMetrics
@@ -482,12 +482,12 @@ Focus specifically on: {focusArea}";
     private int CalculateHealthScore(DevelopmentMetrics metrics)
     {
         var score = 50; // Base score
-        
+
         // Adjust based on activity levels
         if (metrics.TotalCommits > 10) score += 15;
         if (metrics.TotalCodeReviews > 5) score += 15;
         if (metrics.ActionItemCompletionRate > 70) score += 20;
-        
+
         return Math.Min(100, Math.Max(0, score));
     }
 
@@ -549,19 +549,19 @@ Focus specifically on: {focusArea}";
 
     private async Task<List<EntityConnection>> FindCodeMeetingConnections(List<CrossReferenceEntity> entities)
     {
-        return await FindAllConnections(entities.Where(e => 
+        return await FindAllConnections(entities.Where(e =>
             e.EntityType == "CodeReview" || e.EntityType == "Meeting").ToList());
     }
 
     private async Task<List<EntityConnection>> FindMeetingJiraConnections(List<CrossReferenceEntity> entities)
     {
-        return await FindAllConnections(entities.Where(e => 
+        return await FindAllConnections(entities.Where(e =>
             e.EntityType == "Meeting" || e.EntityType == "JiraTicket").ToList());
     }
 
     private async Task<List<EntityConnection>> FindCodeJiraConnections(List<CrossReferenceEntity> entities)
     {
-        return await FindAllConnections(entities.Where(e => 
+        return await FindAllConnections(entities.Where(e =>
             e.EntityType == "CodeReview" || e.EntityType == "JiraTicket").ToList());
     }
 
@@ -596,7 +596,7 @@ Focus specifically on: {focusArea}";
 
         // Identify recurring connection patterns
         var groupedConnections = connections.GroupBy(c => c.ConnectionType);
-        
+
         foreach (var group in groupedConnections.Where(g => g.Count() > 1))
         {
             patterns.Add(new CrossReferencePattern
