@@ -539,8 +539,9 @@ Code to review:
                 OverallScore = 0,
                 Metadata = new ReviewMetadata
                 {
-                    ReviewType = CodeReviewType.Commit,
+                    ReviewType = CodeReviewType.Latest,
                     RepositoryName = _repoName ?? "Unknown Repository",
+                    BranchName = "main", // Default to main branch when no commits found
                     ReviewDate = DateTime.Now
                 }
             };
