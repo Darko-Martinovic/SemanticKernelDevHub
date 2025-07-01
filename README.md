@@ -3,6 +3,7 @@
 A comprehensive enterprise-grade Semantic Kernel application featuring multi-agent or### 🔑 **API Token Setup Guide**
 
 **Azure OpenAI (Required):**
+
 1. Create an Azure OpenAI resource in the Azure Portal
 2. Deploy a GPT-4 model (recommended) or GPT-3.5-turbo
 3. Copy the endpoint URL and API key from the Azure Portal
@@ -108,13 +109,14 @@ SemanticKernelDevHub/
 **🚨 NEVER commit your `.env` file with real credentials to version control!**
 
 - ✅ Use `.env.example` as a template
-- ✅ Add real values only to your local `.env` file  
+- ✅ Add real values only to your local `.env` file
 - ✅ The `.env` file is already in `.gitignore`
 - ❌ Never share API keys in code, documentation, or screenshots
 
 ### 📋 **Quick Setup**
 
 1. **Copy the environment template:**
+
    ```bash
    cp .env.example .env
    ```
@@ -131,6 +133,7 @@ SemanticKernelDevHub/
 The application uses a `.env` file for configuration. **Never commit this file with real credentials!**
 
 **Required (Minimum Configuration):**
+
 ```env
 # Azure OpenAI - Required for all AI features
 AOAI_ENDPOINT=https://your-azure-openai-instance.openai.azure.com/
@@ -139,6 +142,7 @@ CHATCOMPLETION_DEPLOYMENTNAME=gpt-4
 ```
 
 **Optional Integrations:**
+
 ```env
 # GitHub Integration - Enables real repository analysis
 GITHUB_TOKEN=your-github-personal-access-token
@@ -159,11 +163,13 @@ COGNITIVESEARCH_APIKEY=your-cognitive-search-api-key-here
 ### � API Token Setup
 
 **GitHub Integration (Optional):**
+
 - **Token Permissions Required:** `repo`, `read:user`, `read:org`
 - **Generate Token:** GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 - **Scopes:** Select `repo` for full repository access
 
 **Jira Integration (Optional):**
+
 - **API Token Generation:** Atlassian Account Settings → Security → API tokens
 - **Project Access:** Ensure your account has access to the specified project
 - **Project Key:** Find in Jira project settings (usually 2-4 letter abbreviation)
@@ -174,7 +180,7 @@ The application adapts based on available configurations:
 
 - **⭐ Full Mode** (All integrations): 21 menu options with complete intelligence features
 - **🐙 GitHub Mode** (GitHub only): 11 options focused on code analysis
-- **🎫 Jira Mode** (Jira only): 10 options for meeting analysis and ticket management  
+- **🎫 Jira Mode** (Jira only): 10 options for meeting analysis and ticket management
 - **📝 Basic Mode** (Azure OpenAI only): 8 core options for code review and meeting analysis
 
 ## 🚀 Quick Start
