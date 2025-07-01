@@ -93,9 +93,9 @@ public class TicketCreationRequest
 
         var description = $@"**Action Item from Meeting Analysis**
 
-**Original Task**: {actionItem.Task}
+**Original Task**: {actionItem.Description}
 
-**Context**: {actionItem.Context ?? "No additional context provided"}
+**Context**: {actionItem.Notes ?? "No additional context provided"}
 
 **Notes**: {actionItem.Notes ?? "No additional notes"}
 
@@ -109,7 +109,7 @@ public class TicketCreationRequest
         return new TicketCreationRequest
         {
             ProjectKey = projectKey,
-            Title = actionItem.Task,
+            Title = actionItem.Description,
             Description = description,
             IssueType = "Task",
             Priority = priority,

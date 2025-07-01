@@ -167,13 +167,13 @@ public class JiraTicket
 
         return new JiraTicket
         {
-            Title = actionItem.Task,
+            Title = actionItem.Description,
             Description = $@"Action Item from Meeting Analysis
 
-**Original Task**: {actionItem.Task}
+**Original Task**: {actionItem.Description}
 **Assigned To**: {actionItem.AssignedTo ?? "Unassigned"}
 **Due Date**: {actionItem.DueDate?.ToString("yyyy-MM-dd") ?? "Not specified"}
-**Context**: {actionItem.Context ?? "No additional context"}
+**Context**: {actionItem.Notes ?? "No additional context"}
 **Notes**: {actionItem.Notes ?? "No additional notes"}
 
 This ticket was automatically created from a meeting action item analysis.",

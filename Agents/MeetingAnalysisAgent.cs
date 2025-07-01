@@ -15,7 +15,7 @@ public class MeetingAnalysisAgent : IAgent
     private readonly FileSystemPlugin? _fileSystemPlugin;
 
     public string Name => "MeetingAnalysisAgent";
-    
+
     public string Description => "Analyzes meeting transcripts to extract participants, action items, decisions, and key insights using AI-powered analysis";
 
     public MeetingAnalysisAgent(Kernel kernel, FileSystemPlugin? fileSystemPlugin = null)
@@ -65,7 +65,7 @@ public class MeetingAnalysisAgent : IAgent
         [Description("Optional meeting title")] string meetingTitle = "")
     {
         var stopwatch = Stopwatch.StartNew();
-        
+
         var result = new MeetingAnalysisResult
         {
             SourceTranscript = new MeetingTranscript
@@ -111,7 +111,7 @@ public class MeetingAnalysisAgent : IAgent
             // Calculate scores and metrics
             result.ConfidenceScore = CalculateConfidenceScore(result);
             result.TranscriptQuality = AssessTranscriptQuality(transcriptContent);
-            
+
             // Generate recommendations
             result.FollowUpRecommendations = await GenerateRecommendations(result);
 
@@ -128,7 +128,7 @@ public class MeetingAnalysisAgent : IAgent
             result.ConfidenceScore = 0;
             stopwatch.Stop();
             result.ProcessingTime = stopwatch.Elapsed;
-            
+
             Console.WriteLine($"❌ Analysis failed: {ex.Message}");
             return result;
         }
@@ -205,7 +205,7 @@ public class MeetingAnalysisAgent : IAgent
         try
         {
             Console.WriteLine($"📂 Reading transcript file: {Path.GetFileName(filePath)}");
-            
+
             var content = await _fileSystemPlugin.ReadTranscriptFile(filePath);
             if (content.StartsWith("❌"))
             {
@@ -214,7 +214,7 @@ public class MeetingAnalysisAgent : IAgent
 
             var fileName = Path.GetFileName(filePath);
             var meetingTitle = MeetingTranscript.ExtractTitleFromFileName(fileName);
-            
+
             var result = await AnalyzeTranscript(content, meetingTitle);
             result.SourceTranscript.FilePath = filePath;
             result.SourceTranscript.MeetingDate = MeetingTranscript.ExtractDateFromFileName(fileName);
@@ -247,7 +247,7 @@ public class MeetingAnalysisAgent : IAgent
         try
         {
             var templateFiles = await _fileSystemPlugin.ListTemplateFiles();
-            
+
             if (!templateFiles.Any())
             {
                 throw new InvalidOperationException("No sample meeting templates found");
@@ -255,9 +255,9 @@ public class MeetingAnalysisAgent : IAgent
 
             templateIndex = Math.Max(0, Math.Min(templateIndex, templateFiles.Count - 1));
             var selectedFile = templateFiles[templateIndex];
-            
+
             Console.WriteLine($"📋 Analyzing sample meeting: {Path.GetFileName(selectedFile)}");
-            
+
             return await ProcessTranscriptFile(selectedFile);
         }
         catch (Exception ex)
@@ -281,7 +281,7 @@ public class MeetingAnalysisAgent : IAgent
     {
         try
         {
-            Console.WriteLine($"🎫 Creating Jira tickets from meeting: {meetingResult.MeetingTitle}");
+            Console.WriteLine($"🎫 Creating Jira tickets from meeting: {meetingResult.SourceTranscript.Title}");
 
             // Use Jira integration agent to create tickets
             var results = await jiraIntegrationAgent.CreateTicketsFromMeeting(meetingResult);
@@ -290,8 +290,8 @@ public class MeetingAnalysisAgent : IAgent
             var prompt = $@"
 Summarize the Jira ticket creation results from this meeting analysis:
 
-**Meeting**: {meetingResult.MeetingTitle}
-**Date**: {meetingResult.MeetingDate:yyyy-MM-dd}
+**Meeting**: {meetingResult.SourceTranscript.Title}
+**Date**: {meetingResult.SourceTranscript.MeetingDate:yyyy-MM-dd}
 **Total Action Items**: {meetingResult.ActionItems.Count}
 **Tickets Created**: {results.Count(r => r.Success)}
 **Failed Creations**: {results.Count(r => !r.Success)}
@@ -307,7 +307,7 @@ Provide a concise summary of the ticket creation process and any follow-up actio
 Include the success rate and highlight any important tickets that were created.";
 
             var response = await _kernel.InvokePromptAsync(prompt);
-            
+
             var summary = $@"🎫 **Jira Ticket Creation Summary**
 
 {response}
@@ -360,7 +360,7 @@ Provide a well-structured summary in 3-5 paragraphs that captures the essence of
     private async Task<List<ActionItem>> ExtractActionItemsWithAI(string transcriptContent, List<MeetingParticipant> participants)
     {
         var participantNames = string.Join(", ", participants.Select(p => p.Name));
-        
+
         var prompt = $@"
 Analyze this meeting transcript and extract all action items, tasks, and commitments made.
 
@@ -601,8 +601,8 @@ Response:";
                     else if (trimmedLine.StartsWith("PRIORITY:", StringComparison.OrdinalIgnoreCase))
                     {
                         var priorityText = trimmedLine.Substring(9).Trim();
-                        actionItem.Priority = Enum.TryParse<ActionItemPriority>(priorityText, true, out var priority) 
-                            ? priority 
+                        actionItem.Priority = Enum.TryParse<ActionItemPriority>(priorityText, true, out var priority)
+                            ? priority
                             : ActionItemPriority.Medium;
                     }
                     else if (trimmedLine.StartsWith("NOTES:", StringComparison.OrdinalIgnoreCase))

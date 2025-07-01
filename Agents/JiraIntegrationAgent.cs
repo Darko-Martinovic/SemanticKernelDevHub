@@ -16,7 +16,7 @@ public class JiraIntegrationAgent : IAgent
     private readonly string _projectKey;
 
     public string Name => "JiraIntegrationAgent";
-    
+
     public string Description => "Manages Jira ticket operations, auto-detects ticket references, and integrates with code review and meeting analysis workflows";
 
     public JiraIntegrationAgent(Kernel kernel, JiraPlugin jiraPlugin, string projectKey)
@@ -63,10 +63,10 @@ public class JiraIntegrationAgent : IAgent
     {
         try
         {
-            Console.WriteLine($"🎫 Creating Jira ticket from action item: {actionItem.Task}");
+            Console.WriteLine($"🎫 Creating Jira ticket from action item: {actionItem.Description}");
 
             var ticketRequest = TicketCreationRequest.FromActionItem(actionItem, _projectKey);
-            
+
             // Validate the request
             var validationErrors = ticketRequest.Validate();
             if (validationErrors.Any())
@@ -88,7 +88,7 @@ public class JiraIntegrationAgent : IAgent
             if (result.Success)
             {
                 Console.WriteLine($"✅ Created ticket {result.TicketKey} for action item");
-                
+
                 // Use Semantic Kernel to generate a follow-up comment
                 var followUpComment = await GenerateActionItemFollowUp(actionItem, result.TicketKey!);
                 if (!string.IsNullOrEmpty(followUpComment))
@@ -123,14 +123,14 @@ public class JiraIntegrationAgent : IAgent
 
             // Create a formatted comment using the JiraComment helper
             var comment = JiraComment.CreateCodeReviewComment(reviewResult);
-            
+
             // Add the comment to the ticket
             var result = await _jiraPlugin.AddComment(ticketKey, comment.Body);
 
             if (result.Success)
             {
                 Console.WriteLine($"✅ Updated ticket {ticketKey} with code review results");
-                
+
                 // If the review score is low, use SK to suggest priority update
                 if (reviewResult.OverallScore <= 5)
                 {
@@ -394,11 +394,11 @@ public class JiraIntegrationAgent : IAgent
         var prompt = $@"
 Generate a helpful follow-up comment for a Jira ticket created from this meeting action item:
 
-**Action Item**: {actionItem.Task}
+**Action Item**: {actionItem.Description}
 **Assigned To**: {actionItem.AssignedTo ?? "Unassigned"}
 **Priority**: {actionItem.Priority}
 **Due Date**: {actionItem.DueDate?.ToString("yyyy-MM-dd") ?? "Not specified"}
-**Context**: {actionItem.Context ?? "No additional context"}
+**Context**: {actionItem.Notes ?? "No additional context"}
 
 Create a brief, actionable comment that:
 1. Suggests next steps
@@ -453,8 +453,8 @@ Provide a brief recommendation (1-2 sentences) on whether to increase priority a
         var prompt = $@"
 Generate a summary comment for Jira tickets created from a meeting analysis:
 
-**Meeting**: {meetingResult.MeetingTitle}
-**Date**: {meetingResult.MeetingDate:yyyy-MM-dd}
+**Meeting**: {meetingResult.SourceTranscript.Title}
+**Date**: {meetingResult.SourceTranscript.MeetingDate:yyyy-MM-dd}
 **Participants**: {meetingResult.Participants.Count}
 **Total Action Items**: {meetingResult.ActionItems.Count}
 **Tickets Created**: {results.Count(r => r.Success)}

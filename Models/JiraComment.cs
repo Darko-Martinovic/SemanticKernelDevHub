@@ -95,11 +95,11 @@ public class JiraComment
 
 **Action Items**:
 {string.Join("\n", actionItems.Select((item, index) => $@"
-**{index + 1}. {item.Task}**
+**{index + 1}. {item.Description}**
 • **Assigned To**: {item.AssignedTo ?? "Unassigned"}
 • **Priority**: {item.Priority}
 • **Due Date**: {item.DueDate?.ToString("yyyy-MM-dd") ?? "Not specified"}
-• **Context**: {item.Context ?? "No additional context"}
+• **Context**: {item.Notes ?? "No additional context"}
 {(string.IsNullOrEmpty(item.Notes) ? "" : $"• **Notes**: {item.Notes}")}"))}
 
 ---
