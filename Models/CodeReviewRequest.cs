@@ -7,6 +7,21 @@ namespace SemanticKernelDevHub.Models;
 /// </summary>
 public class CodeReviewRequest
 {
+    /// <summary>    /// <summary>
+    /// The commit or PR that was reviewed
+    /// </summary>
+    public string Target { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The repository name being reviewed
+    /// </summary>
+    public string RepositoryName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Total number of files analyzed
+    /// </summary>
+    public int TotalFilesAnalyzed { get; set; }
+
     /// <summary>
     /// The type of review requested
     /// </summary>
@@ -120,6 +135,17 @@ public class CodeReviewResult
     public override string ToString()
     {
         var result = $"📊 **Code Review Results**\n\n";
+        
+        // Add repository information if available
+        if (!string.IsNullOrEmpty(Metadata.RepositoryName))
+        {
+            result += $"**📂 Repository**: {Metadata.RepositoryName}\n";
+        }
+        if (!string.IsNullOrEmpty(Metadata.Target))
+        {
+            result += $"**🎯 Target**: {Metadata.Target}\n";
+        }
+        
         result += $"**Overall Score**: {OverallScore}/10\n";
         result += $"**Files Reviewed**: {FileReviews.Count}\n";
         result += $"**Review Date**: {Metadata.ReviewDate:yyyy-MM-dd HH:mm}\n\n";
@@ -197,6 +223,11 @@ public class ReviewMetadata
     /// The commit or PR that was reviewed
     /// </summary>
     public string Target { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The repository name being reviewed
+    /// </summary>
+    public string RepositoryName { get; set; } = string.Empty;
 
     /// <summary>
     /// Total number of files analyzed

@@ -265,7 +265,8 @@ Standard: {standard}";
             {
                 ReviewType = CodeReviewType.Commit,
                 Target = commitSha,
-                ReviewDate = startTime
+                ReviewDate = startTime,
+                RepositoryName = _repoName ?? "Unknown Repository"
             }
         };
 
@@ -336,7 +337,13 @@ Standard: {standard}";
             return new CodeReviewResult
             {
                 Summary = "No commits found in repository",
-                OverallScore = 0
+                OverallScore = 0,
+                Metadata = new ReviewMetadata
+                {
+                    ReviewType = CodeReviewType.Commit,
+                    RepositoryName = _repoName ?? "Unknown Repository",
+                    ReviewDate = DateTime.Now
+                }
             };
         }
 
