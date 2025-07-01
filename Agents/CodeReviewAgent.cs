@@ -20,9 +20,14 @@ public class CodeReviewAgent : IAgent
 
     public string Name => "CodeReviewAgent";
 
-    public string Description => "Analyzes code quality, suggests improvements, and performs automated code reviews for C#, VB.NET, T-SQL, JavaScript, React, and Java";
+    public string Description =>
+        "Analyzes code quality, suggests improvements, and performs automated code reviews for C#, VB.NET, T-SQL, JavaScript, React, and Java";
 
-    public CodeReviewAgent(Kernel kernel, GitHubPlugin? gitHubPlugin = null, JiraIntegrationAgent? jiraAgent = null)
+    public CodeReviewAgent(
+        Kernel kernel,
+        GitHubPlugin? gitHubPlugin = null,
+        JiraIntegrationAgent? jiraAgent = null
+    )
     {
         _kernel = kernel;
         _gitHubPlugin = gitHubPlugin;
@@ -69,14 +74,18 @@ public class CodeReviewAgent : IAgent
     /// <summary>
     /// Analyzes the provided code and gives feedback
     /// </summary>
-    /// <param name="code">The code to analyze</param>
+    /// /// <param name="code">The code to analyze</param>
     /// <param name="language">Programming language (C#, VB.NET, T-SQL, JavaScript, React, Java)</param>
     /// <returns>Code analysis results</returns>
     [KernelFunction("analyze_code")]
-    [Description("Analyzes code quality and provides detailed feedback for C#, VB.NET, T-SQL, JavaScript, React, and Java")]
+    [Description(
+        "Analyzes code quality and provides detailed feedback for C#, VB.NET, T-SQL, JavaScript, React, and Java"
+    )]
     public async Task<string> AnalyzeCode(
         [Description("The code to analyze")] string code,
-        [Description("Programming language: C#, VB.NET, T-SQL, JavaScript, React, or Java")] string language = "C#")
+        [Description("Programming language: C#, VB.NET, T-SQL, JavaScript, React, or Java")]
+            string language = "C#"
+    )
     {
         // Validate supported language
         var supportedLanguages = new[] { "C#", "VB.NET", "T-SQL", "JavaScript", "React", "Java" };
@@ -87,7 +96,8 @@ public class CodeReviewAgent : IAgent
 
         var languageSpecificGuidance = GetLanguageSpecificGuidance(language);
 
-        var prompt = $@"
+        var prompt =
+            $@"
 You are a senior code reviewer and architect specializing in {language} with over 10 years of experience. Provide an extremely detailed and thorough analysis of the following {language} code. Your review should be comprehensive, educational, and actionable.
 
 ## Review Structure (Provide detailed analysis for each section):
@@ -160,8 +170,11 @@ You are a senior code reviewer and architect specializing in {language} with ove
     [Description("Provides specific code improvement suggestions for supported languages")]
     public async Task<string> SuggestImprovements(
         [Description("The code to improve")] string code,
-        [Description("Focus area: performance, readability, maintainability, security")] string focus = "general",
-        [Description("Programming language: C#, VB.NET, T-SQL, JavaScript, React, or Java")] string language = "C#")
+        [Description("Focus area: performance, readability, maintainability, security")]
+            string focus = "general",
+        [Description("Programming language: C#, VB.NET, T-SQL, JavaScript, React, or Java")]
+            string language = "C#"
+    )
     {
         // Validate supported language
         var supportedLanguages = new[] { "C#", "VB.NET", "T-SQL", "JavaScript", "React", "Java" };
@@ -170,7 +183,8 @@ You are a senior code reviewer and architect specializing in {language} with ove
             return $"❌ Unsupported language: {language}. Supported languages are: {string.Join(", ", supportedLanguages)}";
         }
 
-        var prompt = $@"
+        var prompt =
+            $@"
 You are a senior software architect and {language} expert conducting a detailed code improvement analysis. Your goal is to provide comprehensive, actionable guidance that will significantly enhance the code quality.
 
 ## Comprehensive Improvement Analysis
@@ -246,7 +260,9 @@ Code to improve:
     public async Task<string> CheckCodingStandards(
         [Description("The code to check")] string code,
         [Description("Coding standard to apply")] string standard = "Language Default",
-        [Description("Programming language: C#, VB.NET, T-SQL, JavaScript, React, or Java")] string language = "C#")
+        [Description("Programming language: C#, VB.NET, T-SQL, JavaScript, React, or Java")]
+            string language = "C#"
+    )
     {
         // Validate supported language
         var supportedLanguages = new[] { "C#", "VB.NET", "T-SQL", "JavaScript", "React", "Java" };
@@ -261,7 +277,8 @@ Code to improve:
             standard = GetDefaultStandard(language);
         }
 
-        var prompt = $@"
+        var prompt =
+            $@"
 You are a senior code quality engineer and {language} standards expert conducting a comprehensive coding standards audit. Your analysis should be thorough, educational, and provide clear guidance for improvement.
 
 ## Comprehensive Standards Compliance Review
@@ -360,9 +377,14 @@ Code to review:
     [KernelFunction("review_pull_request")]
     [Description("Reviews a GitHub pull request")]
     public async Task<string> ReviewPullRequest(
-        [Description("Pull request number to review")] int pullRequestNumber)
+        [Description("Pull request number to review")] int pullRequestNumber
+    )
     {
-        if (_gitHubClient == null || string.IsNullOrEmpty(_repoOwner) || string.IsNullOrEmpty(_repoName))
+        if (
+            _gitHubClient == null
+            || string.IsNullOrEmpty(_repoOwner)
+            || string.IsNullOrEmpty(_repoName)
+        )
         {
             return "❌ GitHub integration not configured. Please set GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME in your .env file.";
         }
@@ -370,10 +392,19 @@ Code to review:
         try
         {
             // Get PR details from GitHub
-            var pullRequest = await _gitHubClient.PullRequest.Get(_repoOwner, _repoName, pullRequestNumber);
-            var files = await _gitHubClient.PullRequest.Files(_repoOwner, _repoName, pullRequestNumber);
+            var pullRequest = await _gitHubClient.PullRequest.Get(
+                _repoOwner,
+                _repoName,
+                pullRequestNumber
+            );
+            var files = await _gitHubClient.PullRequest.Files(
+                _repoOwner,
+                _repoName,
+                pullRequestNumber
+            );
 
-            var summary = $@"
+            var summary =
+                $@"
 📋 **Pull Request Review Summary**
 
 **PR #{pullRequestNumber}**: {pullRequest.Title}
@@ -405,7 +436,8 @@ Code to review:
     [KernelFunction("review_commit")]
     [Description("Reviews a specific GitHub commit with detailed analysis")]
     public async Task<CodeReviewResult> ReviewCommit(
-        [Description("The SHA of the commit to review")] string commitSha)
+        [Description("The SHA of the commit to review")] string commitSha
+    )
     {
         if (_gitHubPlugin == null)
         {
@@ -512,7 +544,8 @@ Code to review:
     [KernelFunction("list_recent_commits")]
     [Description("Lists recent commits from the GitHub repository")]
     public async Task<List<GitHubCommitInfo>> ListRecentCommits(
-        [Description("Number of commits to retrieve (1-20)")] int count = 10)
+        [Description("Number of commits to retrieve (1-20)")] int count = 10
+    )
     {
         if (_gitHubPlugin == null)
         {
@@ -578,9 +611,13 @@ Code to review:
     /// <param name="commitInfo">Detailed information about the commit being reviewed</param>
     /// <param name="result">The complete code review result containing all analysis data</param>
     /// <returns>A comprehensive, educational commit summary with detailed insights and recommendations</returns>
-    private async Task<string> GenerateCommitSummary(GitHubCommitInfo commitInfo, CodeReviewResult result)
+    private async Task<string> GenerateCommitSummary(
+        GitHubCommitInfo commitInfo,
+        CodeReviewResult result
+    )
     {
-        var prompt = $@"
+        var prompt =
+            $@"
 You are a senior engineering manager and code review expert creating a comprehensive commit review summary. Your analysis should be thorough, educational, and provide clear strategic guidance for the development team.
 
 ## Commit Analysis Data:
@@ -597,7 +634,7 @@ You are a senior engineering manager and code review expert creating a comprehen
 ### **Code Review Results:**
 - **Overall Quality Score**: {result.OverallScore}/10
 - **Files Successfully Reviewed**: {result.FileReviews.Count}
-- **Average File Score**: {(result.FileReviews.Any() ? result.FileReviews.Average(f => f.Score).ToString("F1") : "N/A")}
+- **Average File Score**: {(result.FileReviews.Any() ? result.FileReviews .Average(f => f.Score) .ToString("F1") : "N/A")}
 - **Critical Issues Identified**: {result.KeyIssues.Count}
 
 ### **Individual File Analysis:**
@@ -674,7 +711,9 @@ Assess readiness for next steps:
         var lowScoreFiles = fileReviews.Where(f => f.Score < 6).ToList();
         if (lowScoreFiles.Any())
         {
-            recommendations.Add($"Review and improve {lowScoreFiles.Count} files with low quality scores");
+            recommendations.Add(
+                $"Review and improve {lowScoreFiles.Count} files with low quality scores"
+            );
         }
 
         var commonIssues = fileReviews
@@ -694,12 +733,16 @@ Assess readiness for next steps:
             recommendations.Add("Review async/await patterns in C# code");
         }
 
-        if (fileReviews.Any(f => f.Language == "JavaScript" && f.Issues.Any(i => i.Contains("var"))))
+        if (
+            fileReviews.Any(f => f.Language == "JavaScript" && f.Issues.Any(i => i.Contains("var")))
+        )
         {
             recommendations.Add("Consider using let/const instead of var in JavaScript");
         }
 
-        return recommendations.Any() ? recommendations : new List<string> { "No specific recommendations - code quality looks good!" };
+        return recommendations.Any()
+            ? recommendations
+            : new List<string> { "No specific recommendations - code quality looks good!" };
     }
 
     /// <summary>
@@ -719,7 +762,11 @@ Assess readiness for next steps:
 
         foreach (var pattern in patterns)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(analysis, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var match = System.Text.RegularExpressions.Regex.Match(
+                analysis,
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
             if (match.Success && int.TryParse(match.Groups[1].Value, out var score))
             {
                 return Math.Max(1, Math.Min(score, 10)); // Ensure between 1-10
@@ -746,11 +793,17 @@ Assess readiness for next steps:
 
         foreach (var pattern in issuePatterns)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(analysis, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+            var match = System.Text.RegularExpressions.Regex.Match(
+                analysis,
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                    | System.Text.RegularExpressions.RegexOptions.Singleline
+            );
             if (match.Success)
             {
                 var issueText = match.Groups[1].Value.Trim();
-                var lines = issueText.Split('\n')
+                var lines = issueText
+                    .Split('\n')
                     .Where(line => !string.IsNullOrWhiteSpace(line) && line.Trim().StartsWith("-"))
                     .Select(line => line.Trim().TrimStart('-').Trim())
                     .ToList();
@@ -778,11 +831,17 @@ Assess readiness for next steps:
 
         foreach (var pattern in suggestionPatterns)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(analysis, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+            var match = System.Text.RegularExpressions.Regex.Match(
+                analysis,
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                    | System.Text.RegularExpressions.RegexOptions.Singleline
+            );
             if (match.Success)
             {
                 var suggestionText = match.Groups[1].Value.Trim();
-                var lines = suggestionText.Split('\n')
+                var lines = suggestionText
+                    .Split('\n')
                     .Where(line => !string.IsNullOrWhiteSpace(line) && line.Trim().StartsWith("-"))
                     .Select(line => line.Trim().TrimStart('-').Trim())
                     .ToList();
@@ -806,7 +865,8 @@ Assess readiness for next steps:
     {
         return language.ToUpper() switch
         {
-            "C#" => @"
+            "C#"
+                => @"
 **C# Comprehensive Review Focus Areas**:
 
 **1. Async/Await Patterns & Threading:**
@@ -844,7 +904,8 @@ Assess readiness for next steps:
 - Check for proper separation of concerns and layering
 - Assess unit testability and mock-friendly design",
 
-            "VB.NET" => @"
+            "VB.NET"
+                => @"
 **VB.NET Comprehensive Review Focus Areas**:
 
 **1. Language-Specific Best Practices:**
@@ -882,7 +943,8 @@ Assess readiness for next steps:
 - Evaluate code reusability and DRY principle adherence
 - Review debugging and logging implementation patterns",
 
-            "T-SQL" => @"
+            "T-SQL"
+                => @"
 **T-SQL Comprehensive Review Focus Areas**:
 
 **1. Query Performance & Optimization:**
@@ -927,7 +989,8 @@ Assess readiness for next steps:
 - Evaluate capacity planning and growth patterns
 - Review documentation and change management processes",
 
-            "JAVASCRIPT" => @"
+            "JAVASCRIPT"
+                => @"
 **JavaScript Comprehensive Review Focus Areas**:
 
 **1. Modern JavaScript & ES6+ Features:**
@@ -972,7 +1035,8 @@ Assess readiness for next steps:
 - Evaluate responsive design implementation
 - Review progressive enhancement strategies",
 
-            "REACT" => @"
+            "REACT"
+                => @"
 **React Comprehensive Review Focus Areas**:
 
 **1. Component Design & Architecture:**
@@ -1024,7 +1088,8 @@ Assess readiness for next steps:
 - Evaluate end-to-end testing implementation
 - Review component testing isolation and mocking",
 
-            "JAVA" => @"
+            "JAVA"
+                => @"
 **Java Comprehensive Review Focus Areas**:
 
 **1. Object-Oriented Design & SOLID Principles:**
@@ -1076,7 +1141,8 @@ Assess readiness for next steps:
 - Evaluate code quality metrics and static analysis
 - Review continuous integration and deployment practices",
 
-            _ => @"
+            _
+                => @"
 **General Comprehensive Review Focus Areas**:
 
 **1. Code Structure & Organization:**

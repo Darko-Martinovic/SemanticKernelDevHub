@@ -32,29 +32,34 @@ public class GitHubPlugin
     [KernelFunction("get_recent_commits")]
     [Description("Retrieves recent commits from the GitHub repository")]
     public async Task<List<GitHubCommitInfo>> GetRecentCommits(
-        [Description("Number of commits to retrieve (default: 10, max: 50)")] int count = 10)
+        [Description("Number of commits to retrieve (default: 10, max: 50)")] int count = 10
+    )
     {
         try
         {
             // Limit to reasonable range
             count = Math.Max(1, Math.Min(count, 50));
 
-            var request = new ApiOptions
-            {
-                PageCount = 1,
-                PageSize = count
-            };
-            
-            var commits = await _gitHubClient.Repository.Commit.GetAll(_repoOwner, _repoName, request);
+            var request = new ApiOptions { PageCount = 1, PageSize = count };
 
-            return commits.Select(commit => new GitHubCommitInfo
-            {
-                Sha = commit.Sha,
-                Message = commit.Commit.Message,
-                Author = commit.Commit.Author.Name,
-                Date = commit.Commit.Author.Date,
-                Url = commit.HtmlUrl
-            }).ToList();
+            var commits = await _gitHubClient.Repository.Commit.GetAll(
+                _repoOwner,
+                _repoName,
+                request
+            );
+
+            return [.. commits
+                .Select(
+                    commit =>
+                        new GitHubCommitInfo
+                        {
+                            Sha = commit.Sha,
+                            Message = commit.Commit.Message,
+                            Author = commit.Commit.Author.Name,
+                            Date = commit.Commit.Author.Date,
+                            Url = commit.HtmlUrl
+                        }
+                )];
         }
         catch (Exception ex)
         {
@@ -70,11 +75,16 @@ public class GitHubPlugin
     [KernelFunction("get_commit_details")]
     [Description("Gets detailed information about a specific commit including file changes")]
     public async Task<GitHubCommitInfo> GetCommitDetails(
-        [Description("The SHA (hash) of the commit to analyze")] string commitSha)
+        [Description("The SHA (hash) of the commit to analyze")] string commitSha
+    )
     {
         try
         {
-            var commit = await _gitHubClient.Repository.Commit.Get(_repoOwner, _repoName, commitSha);
+            var commit = await _gitHubClient.Repository.Commit.Get(
+                _repoOwner,
+                _repoName,
+                commitSha
+            );
 
             var commitInfo = new GitHubCommitInfo
             {
@@ -83,22 +93,31 @@ public class GitHubPlugin
                 Author = commit.Commit.Author.Name,
                 Date = commit.Commit.Author.Date,
                 Url = commit.HtmlUrl,
-                FilesChanged = commit.Files?.Select(file => new GitHubFileInfo
-                {
-                    FileName = file.Filename,
-                    Status = file.Status,
-                    Additions = file.Additions,
-                    Deletions = file.Deletions,
-                    Changes = file.Changes,
-                    Patch = file.Patch
-                }).ToList() ?? new List<GitHubFileInfo>()
+                FilesChanged =
+                    commit.Files
+                        ?.Select(
+                            file =>
+                                new GitHubFileInfo
+                                {
+                                    FileName = file.Filename,
+                                    Status = file.Status,
+                                    Additions = file.Additions,
+                                    Deletions = file.Deletions,
+                                    Changes = file.Changes,
+                                    Patch = file.Patch
+                                }
+                        )
+                        .ToList() ?? new List<GitHubFileInfo>()
             };
 
             return commitInfo;
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Failed to get commit details for {commitSha}: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Failed to get commit details for {commitSha}: {ex.Message}",
+                ex
+            );
         }
     }
 
@@ -110,38 +129,57 @@ public class GitHubPlugin
     [KernelFunction("get_pull_request")]
     [Description("Gets detailed information about a pull request")]
     public async Task<string> GetPullRequestInfo(
-        [Description("The pull request number")] int pullRequestNumber)
+        [Description("The pull request number")] int pullRequestNumber
+    )
     {
         try
         {
-            var pullRequest = await _gitHubClient.PullRequest.Get(_repoOwner, _repoName, pullRequestNumber);
-            var files = await _gitHubClient.PullRequest.Files(_repoOwner, _repoName, pullRequestNumber);
+            var pullRequest = await _gitHubClient.PullRequest.Get(
+                _repoOwner,
+                _repoName,
+                pullRequestNumber
+            );
+            var files = await _gitHubClient.PullRequest.Files(
+                _repoOwner,
+                _repoName,
+                pullRequestNumber
+            );
 
-            var filesList = files.Select(f => new GitHubFileInfo
-            {
-                FileName = f.FileName,
-                Status = f.Status,
-                Additions = f.Additions,
-                Deletions = f.Deletions,
-                Changes = f.Changes,
-                Patch = f.Patch
-            }).ToList();
+            var filesList = files
+                .Select(
+                    f =>
+                        new GitHubFileInfo
+                        {
+                            FileName = f.FileName,
+                            Status = f.Status,
+                            Additions = f.Additions,
+                            Deletions = f.Deletions,
+                            Changes = f.Changes,
+                            Patch = f.Patch
+                        }
+                )
+                .ToList();
 
-            return System.Text.Json.JsonSerializer.Serialize(new
-            {
-                Number = pullRequest.Number,
-                Title = pullRequest.Title,
-                Description = pullRequest.Body,
-                Author = pullRequest.User.Login,
-                State = pullRequest.State.ToString(),
-                CreatedAt = pullRequest.CreatedAt,
-                UpdatedAt = pullRequest.UpdatedAt,
-                Files = filesList
-            });
+            return System.Text.Json.JsonSerializer.Serialize(
+                new
+                {
+                    Number = pullRequest.Number,
+                    Title = pullRequest.Title,
+                    Description = pullRequest.Body,
+                    Author = pullRequest.User.Login,
+                    State = pullRequest.State.ToString(),
+                    CreatedAt = pullRequest.CreatedAt,
+                    UpdatedAt = pullRequest.UpdatedAt,
+                    Files = filesList
+                }
+            );
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Failed to get pull request {pullRequestNumber}: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Failed to get pull request {pullRequestNumber}: {ex.Message}",
+                ex
+            );
         }
     }
 
@@ -155,12 +193,17 @@ public class GitHubPlugin
     [Description("Retrieves the content of a file from the GitHub repository")]
     public async Task<string> GetFileContent(
         [Description("Path to the file in the repository")] string filePath,
-        [Description("Branch or commit reference (default: main branch)")] string reference = "main")
+        [Description("Branch or commit reference (default: main branch)")] string reference = "main"
+    )
     {
         try
         {
-            var fileContents = await _gitHubClient.Repository.Content.GetAllContents(_repoOwner, _repoName, filePath);
-            
+            var fileContents = await _gitHubClient.Repository.Content.GetAllContents(
+                _repoOwner,
+                _repoName,
+                filePath
+            );
+
             if (fileContents.Count == 0)
             {
                 return $"File not found: {filePath}";
@@ -171,7 +214,10 @@ public class GitHubPlugin
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Failed to get file content for {filePath}: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Failed to get file content for {filePath}: {ex.Message}",
+                ex
+            );
         }
     }
 
@@ -183,25 +229,38 @@ public class GitHubPlugin
     [KernelFunction("list_commit_files")]
     [Description("Lists all files that were changed in a specific commit")]
     public async Task<List<GitHubFileInfo>> ListCommitFiles(
-        [Description("The SHA of the commit")] string commitSha)
+        [Description("The SHA of the commit")] string commitSha
+    )
     {
         try
         {
-            var commit = await _gitHubClient.Repository.Commit.Get(_repoOwner, _repoName, commitSha);
-            
-            return commit.Files?.Select(file => new GitHubFileInfo
-            {
-                FileName = file.Filename,
-                Status = file.Status,
-                Additions = file.Additions,
-                Deletions = file.Deletions,
-                Changes = file.Changes,
-                Patch = file.Patch
-            }).ToList() ?? new List<GitHubFileInfo>();
+            var commit = await _gitHubClient.Repository.Commit.Get(
+                _repoOwner,
+                _repoName,
+                commitSha
+            );
+
+            return commit.Files
+                    ?.Select(
+                        file =>
+                            new GitHubFileInfo
+                            {
+                                FileName = file.Filename,
+                                Status = file.Status,
+                                Additions = file.Additions,
+                                Deletions = file.Deletions,
+                                Changes = file.Changes,
+                                Patch = file.Patch
+                            }
+                    )
+                    .ToList() ?? new List<GitHubFileInfo>();
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Failed to list files for commit {commitSha}: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Failed to list files for commit {commitSha}: {ex.Message}",
+                ex
+            );
         }
     }
 
@@ -216,21 +275,23 @@ public class GitHubPlugin
         try
         {
             var repo = await _gitHubClient.Repository.Get(_repoOwner, _repoName);
-            
-            return System.Text.Json.JsonSerializer.Serialize(new
-            {
-                Name = repo.Name,
-                FullName = repo.FullName,
-                Description = repo.Description,
-                Language = repo.Language,
-                StargazersCount = repo.StargazersCount,
-                ForksCount = repo.ForksCount,
-                OpenIssuesCount = repo.OpenIssuesCount,
-                DefaultBranch = repo.DefaultBranch,
-                CreatedAt = repo.CreatedAt,
-                UpdatedAt = repo.UpdatedAt,
-                Url = repo.HtmlUrl
-            });
+
+            return System.Text.Json.JsonSerializer.Serialize(
+                new
+                {
+                    Name = repo.Name,
+                    FullName = repo.FullName,
+                    Description = repo.Description,
+                    Language = repo.Language,
+                    StargazersCount = repo.StargazersCount,
+                    ForksCount = repo.ForksCount,
+                    OpenIssuesCount = repo.OpenIssuesCount,
+                    DefaultBranch = repo.DefaultBranch,
+                    CreatedAt = repo.CreatedAt,
+                    UpdatedAt = repo.UpdatedAt,
+                    Url = repo.HtmlUrl
+                }
+            );
         }
         catch (Exception ex)
         {
