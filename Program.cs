@@ -15,26 +15,31 @@ var apiKey = Environment.GetEnvironmentVariable("AOAI_APIKEY");
 var deploymentName = Environment.GetEnvironmentVariable("CHATCOMPLETION_DEPLOYMENTNAME");
 
 // Validate required configuration
-if (string.IsNullOrEmpty(endpoint)
+if (
+    string.IsNullOrEmpty(endpoint)
     || string.IsNullOrEmpty(apiKey)
-    || string.IsNullOrEmpty(deploymentName))
+    || string.IsNullOrEmpty(deploymentName)
+)
 {
     Console.WriteLine("❌ Missing required configuration. Please check your .env file.");
     Console.WriteLine($"AOAI_ENDPOINT: {(string.IsNullOrEmpty(endpoint) ? "MISSING" : "✓")}");
     Console.WriteLine($"AOAI_APIKEY: {(string.IsNullOrEmpty(apiKey) ? "MISSING" : "✓")}");
     Console.WriteLine(
-        $"CHATCOMPLETION_DEPLOYMENTNAME: {(string.IsNullOrEmpty(deploymentName) ? "MISSING" : "✓")}");
+        $"CHATCOMPLETION_DEPLOYMENTNAME: {(string.IsNullOrEmpty(deploymentName) ? "MISSING" : "✓")}"
+    );
     return;
 }
 
 try
 {
     // Create kernel with Azure OpenAI chat completion service
-    var kernel = Kernel.CreateBuilder()
+    var kernel = Kernel
+        .CreateBuilder()
         .AddAzureOpenAIChatCompletion(
             deploymentName: deploymentName,
             endpoint: endpoint,
-            apiKey: apiKey)
+            apiKey: apiKey
+        )
         .Build();
 
     Console.WriteLine("🎉 Hello Semantic Kernel!");
@@ -49,7 +54,11 @@ try
     var gitHubOwner = Environment.GetEnvironmentVariable("GITHUB_REPO_OWNER");
     var gitHubRepo = Environment.GetEnvironmentVariable("GITHUB_REPO_NAME");
 
-    if (!string.IsNullOrEmpty(gitHubToken) && !string.IsNullOrEmpty(gitHubOwner) && !string.IsNullOrEmpty(gitHubRepo))
+    if (
+        !string.IsNullOrEmpty(gitHubToken)
+        && !string.IsNullOrEmpty(gitHubOwner)
+        && !string.IsNullOrEmpty(gitHubRepo)
+    )
     {
         try
         {
@@ -60,13 +69,17 @@ try
         catch (Exception ex)
         {
             Console.WriteLine($"⚠️  GitHub plugin initialization failed: {ex.Message}");
-            Console.WriteLine("📝 Code review will work in limited mode without GitHub integration");
+            Console.WriteLine(
+                "📝 Code review will work in limited mode without GitHub integration"
+            );
         }
     }
     else
     {
         Console.WriteLine("⚠️  GitHub configuration incomplete - some features will be limited");
-        Console.WriteLine("📝 Please ensure GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME are set");
+        Console.WriteLine(
+            "📝 Please ensure GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME are set"
+        );
     }
 
     // Initialize FileSystem Plugin
@@ -84,8 +97,12 @@ try
     var jiraToken = Environment.GetEnvironmentVariable("JIRA_API_TOKEN");
     var jiraProjectKey = Environment.GetEnvironmentVariable("JIRA_PROJECT_KEY");
 
-    if (!string.IsNullOrEmpty(jiraUrl) && !string.IsNullOrEmpty(jiraEmail) &&
-        !string.IsNullOrEmpty(jiraToken) && !string.IsNullOrEmpty(jiraProjectKey))
+    if (
+        !string.IsNullOrEmpty(jiraUrl)
+        && !string.IsNullOrEmpty(jiraEmail)
+        && !string.IsNullOrEmpty(jiraToken)
+        && !string.IsNullOrEmpty(jiraProjectKey)
+    )
     {
         try
         {
@@ -112,7 +129,9 @@ try
     else
     {
         Console.WriteLine("⚠️  Jira configuration incomplete - Jira features will be disabled");
-        Console.WriteLine("📝 Please ensure JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_PROJECT_KEY are set");
+        Console.WriteLine(
+            "📝 Please ensure JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_PROJECT_KEY are set"
+        );
     }
 
     // Initialize and register CodeReviewAgent with GitHub plugin and Jira integration
@@ -128,18 +147,31 @@ try
 
     // Initialize Intelligence Agent with all other agents
     Console.WriteLine("\n🧠 Initializing Intelligence Agent...");
-    var intelligenceAgent = new IntelligenceAgent(kernel, codeReviewAgent, meetingAnalysisAgent, jiraIntegrationAgent);
+    var intelligenceAgent = new IntelligenceAgent(
+        kernel,
+        codeReviewAgent,
+        meetingAnalysisAgent,
+        jiraIntegrationAgent
+    );
     await intelligenceAgent.InitializeAsync();
     await intelligenceAgent.RegisterFunctionsAsync(kernel);
 
     // Initialize Orchestration Service
     Console.WriteLine("🎭 Initializing Orchestration Service...");
-    var orchestrationService = new OrchestrationService(kernel, intelligenceAgent, codeReviewAgent, meetingAnalysisAgent, jiraIntegrationAgent);
+    var orchestrationService = new OrchestrationService(
+        kernel,
+        intelligenceAgent,
+        codeReviewAgent,
+        meetingAnalysisAgent,
+        jiraIntegrationAgent
+    );
     Console.WriteLine("✅ Advanced orchestration capabilities ready");
 
     // Get registered functions
     var functions = kernel.Plugins.GetFunctionsMetadata();
-    Console.WriteLine($"📋 Available functions: [{string.Join(", ", functions.Select(f => f.Name))}]");
+    Console.WriteLine(
+        $"📋 Available functions: [{string.Join(", ", functions.Select(f => f.Name))}]"
+    );
 
     // Final status messages
     if (gitHubPlugin != null && jiraPlugin != null)
@@ -183,7 +215,16 @@ try
     }
 
     // Interactive menu
-    await RunInteractiveMenu(kernel, codeReviewAgent, gitHubPlugin, meetingAnalysisAgent, fileSystemPlugin, jiraIntegrationAgent, intelligenceAgent, orchestrationService);
+    await RunInteractiveMenu(
+        kernel,
+        codeReviewAgent,
+        gitHubPlugin,
+        meetingAnalysisAgent,
+        fileSystemPlugin,
+        jiraIntegrationAgent,
+        intelligenceAgent,
+        orchestrationService
+    );
 }
 catch (Exception ex)
 {
@@ -191,7 +232,16 @@ catch (Exception ex)
     Console.WriteLine($"📋 Details: {ex}");
 }
 
-static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAgent, GitHubPlugin? gitHubPlugin, MeetingAnalysisAgent meetingAnalysisAgent, FileSystemPlugin fileSystemPlugin, JiraIntegrationAgent? jiraIntegrationAgent, IntelligenceAgent intelligenceAgent, OrchestrationService orchestrationService)
+static async Task RunInteractiveMenu(
+    Kernel kernel,
+    CodeReviewAgent codeReviewAgent,
+    GitHubPlugin? gitHubPlugin,
+    MeetingAnalysisAgent meetingAnalysisAgent,
+    FileSystemPlugin fileSystemPlugin,
+    JiraIntegrationAgent? jiraIntegrationAgent,
+    IntelligenceAgent intelligenceAgent,
+    OrchestrationService orchestrationService
+)
 {
     while (true)
     {
@@ -272,9 +322,14 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
             Console.WriteLine("8. Exit");
         }
 
-        var maxChoice = (gitHubPlugin != null && jiraIntegrationAgent != null) ? "14" :
-                       (gitHubPlugin != null) ? "11" :
-                       (jiraIntegrationAgent != null) ? "10" : "8";
+        var maxChoice =
+            (gitHubPlugin != null && jiraIntegrationAgent != null)
+                ? "21"
+                : (gitHubPlugin != null)
+                    ? "11"
+                    : (jiraIntegrationAgent != null)
+                        ? "10"
+                        : "8";
 
         Console.Write($"\nEnter your choice (1-{maxChoice}): ");
         var choice = Console.ReadLine();
@@ -346,7 +401,9 @@ static async Task RunInteractiveMenu(Kernel kernel, CodeReviewAgent codeReviewAg
                         await ExecuteSprintPlanningWorkflow(orchestrationService);
                         break;
                     case "21":
-                        Console.WriteLine("\n👋 Thank you for using Semantic Kernel Intelligence Hub!");
+                        Console.WriteLine(
+                            "\n👋 Thank you for using Semantic Kernel Intelligence Hub!"
+                        );
                         return;
                     default:
                         Console.WriteLine("\n❌ Invalid choice. Please enter 1-21.");
@@ -411,7 +468,8 @@ static async Task TestCodeReviewAgent(CodeReviewAgent agent)
     Console.WriteLine("\n🧪 Testing Code Review Agent with different languages...");
 
     // Test C# code
-    var csharpCode = @"
+    var csharpCode =
+        @"
 public class Calculator
 {
     public int Add(int a, int b)
@@ -433,7 +491,8 @@ public class Calculator
     Console.WriteLine("\n" + new string('-', 50));
 
     // Test JavaScript code
-    var jsCode = @"
+    var jsCode =
+        @"
 function calculateTotal(items) {
     var total = 0;
     for (var i = 0; i < items.length; i++) {
@@ -573,7 +632,9 @@ static async Task ListRecentCommits(CodeReviewAgent agent)
             Console.WriteLine($"      👤 {commit.Author} | 📅 {commit.Date:yyyy-MM-dd HH:mm}");
             if (commit.FilesChanged.Any())
             {
-                Console.WriteLine($"      📁 {commit.FilesChanged.Count} files changed (+{commit.TotalAdditions}/-{commit.TotalDeletions})");
+                Console.WriteLine(
+                    $"      📁 {commit.FilesChanged.Count} files changed (+{commit.TotalAdditions}/-{commit.TotalDeletions})"
+                );
             }
             Console.WriteLine();
         }
@@ -640,14 +701,18 @@ static async Task ShowRepositoryInfo(GitHubPlugin gitHubPlugin)
         Console.WriteLine("\n📋 Repository Information:");
         Console.WriteLine(new string('-', 50));
         Console.WriteLine($"Name: {repo?.GetProperty("Name").GetString()}");
-        Console.WriteLine($"Description: {repo?.GetProperty("Description").GetString() ?? "No description"}");
+        Console.WriteLine(
+            $"Description: {repo?.GetProperty("Description").GetString() ?? "No description"}"
+        );
         Console.WriteLine($"Language: {repo?.GetProperty("Language").GetString() ?? "Mixed"}");
         Console.WriteLine($"Stars: {repo?.GetProperty("StargazersCount").GetInt32()}");
         Console.WriteLine($"Forks: {repo?.GetProperty("ForksCount").GetInt32()}");
         Console.WriteLine($"Open Issues: {repo?.GetProperty("OpenIssuesCount").GetInt32()}");
         Console.WriteLine($"Default Branch: {repo?.GetProperty("DefaultBranch").GetString()}");
         Console.WriteLine($"Created: {repo?.GetProperty("CreatedAt").GetDateTime():yyyy-MM-dd}");
-        Console.WriteLine($"Last Updated: {repo?.GetProperty("UpdatedAt").GetDateTime():yyyy-MM-dd}");
+        Console.WriteLine(
+            $"Last Updated: {repo?.GetProperty("UpdatedAt").GetDateTime():yyyy-MM-dd}"
+        );
         Console.WriteLine($"URL: {repo?.GetProperty("Url").GetString()}");
     }
     catch (Exception ex)
@@ -659,7 +724,10 @@ static async Task ShowRepositoryInfo(GitHubPlugin gitHubPlugin)
 /// <summary>
 /// Processes a meeting transcript file
 /// </summary>
-static async Task ProcessMeetingTranscript(MeetingAnalysisAgent meetingAgent, FileSystemPlugin fileSystemPlugin)
+static async Task ProcessMeetingTranscript(
+    MeetingAnalysisAgent meetingAgent,
+    FileSystemPlugin fileSystemPlugin
+)
 {
     try
     {
@@ -691,7 +759,10 @@ static async Task ProcessMeetingTranscript(MeetingAnalysisAgent meetingAgent, Fi
 /// <summary>
 /// Starts file watcher mode
 /// </summary>
-static Task StartFileWatcherMode(FileSystemPlugin fileSystemPlugin, MeetingAnalysisAgent meetingAgent)
+static Task StartFileWatcherMode(
+    FileSystemPlugin fileSystemPlugin,
+    MeetingAnalysisAgent meetingAgent
+)
 {
     Console.WriteLine("\n📡 File watcher mode activated. Press any key to return to menu...");
     Console.ReadKey();
@@ -761,7 +832,9 @@ static async Task GenerateDevelopmentIntelligenceReport(IntelligenceAgent intell
         Console.WriteLine($"• Code Reviews: {report.Metrics.TotalCodeReviews}");
         Console.WriteLine($"• Meetings: {report.Metrics.TotalMeetings}");
         Console.WriteLine($"• Jira Tickets: {report.Metrics.TotalJiraTickets}");
-        Console.WriteLine($"• Action Item Completion: {report.Metrics.ActionItemCompletionRate:F1}%");
+        Console.WriteLine(
+            $"• Action Item Completion: {report.Metrics.ActionItemCompletionRate:F1}%"
+        );
 
         Console.WriteLine($"\n🔍 **KEY INSIGHTS**:");
         foreach (var insight in report.Insights.Take(3))
@@ -811,7 +884,9 @@ static async Task AnalyzeCrossReferences(IntelligenceAgent intelligenceAgent)
         Console.WriteLine($"\n🔍 **CONNECTION PATTERNS**:");
         foreach (var pattern in crossRef.Patterns.Take(3))
         {
-            Console.WriteLine($"• {pattern.Name}: {pattern.Description} (Confidence: {pattern.Confidence:F2})");
+            Console.WriteLine(
+                $"• {pattern.Name}: {pattern.Description} (Confidence: {pattern.Confidence:F2})"
+            );
         }
 
         Console.WriteLine($"\n📋 **SUMMARY**:");
@@ -854,21 +929,27 @@ static async Task ShowPredictiveInsightsDashboard(IntelligenceAgent intelligence
             foreach (var prediction in group.Take(2))
             {
                 Console.WriteLine($"• {prediction.Title}");
-                Console.WriteLine($"  Priority: {prediction.Priority} | Confidence: {prediction.Confidence:F2}");
+                Console.WriteLine(
+                    $"  Priority: {prediction.Priority} | Confidence: {prediction.Confidence:F2}"
+                );
                 Console.WriteLine($"  Expected Impact: {prediction.ExpectedImpact}");
                 Console.WriteLine($"  Time Frame: {prediction.TimeFrame}");
                 Console.WriteLine($"  Description: {prediction.Description}");
 
                 if (prediction.ActionSteps.Any())
                 {
-                    Console.WriteLine($"  Action Steps: {prediction.ActionSteps.Count} steps defined");
+                    Console.WriteLine(
+                        $"  Action Steps: {prediction.ActionSteps.Count} steps defined"
+                    );
                 }
                 Console.WriteLine();
             }
         }
 
         // Highlight critical predictions
-        var criticalPredictions = predictions.Where(p => p.Priority == RecommendationPriority.Critical).ToList();
+        var criticalPredictions = predictions
+            .Where(p => p.Priority == RecommendationPriority.Critical)
+            .ToList();
         if (criticalPredictions.Any())
         {
             Console.WriteLine($"\n⚠️  **CRITICAL ATTENTION REQUIRED**:");
@@ -1009,7 +1090,11 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
 
     Console.Write("Enter number of days to analyze (default 7): ");
     var daysInput = Console.ReadLine();
-    var days = string.IsNullOrWhiteSpace(daysInput) ? 7 : int.TryParse(daysInput, out var d) ? d : 7;
+    var days = string.IsNullOrWhiteSpace(daysInput)
+        ? 7
+        : int.TryParse(daysInput, out var d)
+            ? d
+            : 7;
 
     try
     {
@@ -1023,9 +1108,15 @@ static async Task ExecutePerformanceWorkflow(OrchestrationService orchestrationS
         if (result.Success && result.DevelopmentSummary != null)
         {
             Console.WriteLine($"\n📊 **DEVELOPMENT HEALTH**:");
-            Console.WriteLine($"• Overall Score: {result.DevelopmentSummary.OverallHealthScore}/100");
-            Console.WriteLine($"• Velocity Score: {result.DevelopmentSummary.Performance.VelocityScore:F1}/10");
-            Console.WriteLine($"• Quality Score: {result.DevelopmentSummary.Quality.OverallScore:F1}/10");
+            Console.WriteLine(
+                $"• Overall Score: {result.DevelopmentSummary.OverallHealthScore}/100"
+            );
+            Console.WriteLine(
+                $"• Velocity Score: {result.DevelopmentSummary.Performance.VelocityScore:F1}/10"
+            );
+            Console.WriteLine(
+                $"• Quality Score: {result.DevelopmentSummary.Quality.OverallScore:F1}/10"
+            );
 
             if (result.PerformanceMeetingInsights.Any())
             {
@@ -1113,9 +1204,15 @@ static async Task ExecuteSprintPlanningWorkflow(OrchestrationService orchestrati
             Console.WriteLine($"\n📊 **CURRENT HEALTH STATUS**:");
             if (result.CurrentHealthSummary != null)
             {
-                Console.WriteLine($"• Health Score: {result.CurrentHealthSummary.OverallHealthScore}/100");
-                Console.WriteLine($"• Velocity: {result.CurrentHealthSummary.Performance.VelocityScore:F1}/10");
-                Console.WriteLine($"• Quality Trend: {result.CurrentHealthSummary.Performance.VelocityTrend}");
+                Console.WriteLine(
+                    $"• Health Score: {result.CurrentHealthSummary.OverallHealthScore}/100"
+                );
+                Console.WriteLine(
+                    $"• Velocity: {result.CurrentHealthSummary.Performance.VelocityScore:F1}/10"
+                );
+                Console.WriteLine(
+                    $"• Quality Trend: {result.CurrentHealthSummary.Performance.VelocityTrend}"
+                );
             }
             Console.WriteLine($"• Average Code Quality: {result.AverageCodeQuality:F1}/10");
 
